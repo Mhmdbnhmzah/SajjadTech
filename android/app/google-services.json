@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1000878401201",
+    "project_id": "sajjadtech-f79b7",
+    "storage_bucket": "sajjadtech-f79b7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1000878401201:android:98911fca0ceb748f47a490",
+        "android_client_info": {
+          "package_name": "com.example.sajjadtech"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdFr7eLFon5jMRHYEJpO6luTDm5Y6C_Rg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
