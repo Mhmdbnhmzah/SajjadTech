@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/database/database_helper.dart';
 import '../../../core/services/sync_service.dart';
 
 class DashboardViewModel extends ChangeNotifier {
-  final AppDatabase? db;
+  AppDatabase? _db;
+  StreamSubscription? _subscription;
+
+  AppDatabase? get db => _db;
   
   bool _isSyncing = false;
   bool get isSyncing => _isSyncing;
@@ -26,23 +30,48 @@ class DashboardViewModel extends ChangeNotifier {
   List<Order> _recentOrders = [];
   List<Order> get recentOrders => _recentOrders;
 
-  Map<int, Customer> _customerCache = {};
+  List<Order> _urgentOrders = [];
+  List<Order> get urgentOrders => _urgentOrders;
+
+  final Map<int, Customer> _customerCache = {};
   Map<int, Customer> get customerCache => _customerCache;
 
-  DashboardViewModel({required this.db}) {
-    _loadStats();
+  DashboardViewModel({AppDatabase? db}) {
+    updateDb(db);
+  }
+
+  void updateDb(AppDatabase? newDb) {
+    if (_db == newDb) return;
+
+    _subscription?.cancel();
+    _subscription = null;
+
+    _db = newDb;
+
+    if (_db != null) {
+      _loadStats();
+    } else {
+      _receivedCount = 0;
+      _readyCount = 0;
+      _deliveredTodayCount = 0;
+      _todayIncome = 0.0;
+      _recentOrders = [];
+      _urgentOrders = [];
+      _customerCache.clear();
+      notifyListeners();
+    }
   }
 
   void _loadStats() async {
-    if (db == null) return;
+    if (_db == null) return;
 
-    // Watch all orders changes reactively
-    db!.watchOrders().listen((ordersList) async {
+    _subscription = _db!.watchOrders().listen((ordersList) async {
       int rec = 0;
       int rdy = 0;
       int delToday = 0;
       double income = 0.0;
       final now = DateTime.now();
+      final todayDateOnly = DateTime(now.year, now.month, now.day);
 
       for (final order in ordersList) {
         if (order.status == 'received') {
@@ -76,10 +105,25 @@ class DashboardViewModel extends ChangeNotifier {
         ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       _recentOrders = sortedOrders.take(5).toList();
 
-      // Fetch customer cache for these orders
-      for (final order in _recentOrders) {
+      // Filter and sort urgent orders: status != 'delivered' and delivery date within today + 2 days
+      final urgentList = <Order>[];
+      for (final order in ordersList) {
+        if (order.status != 'delivered') {
+          final delivDateOnly = DateTime(order.deliveryDate.year, order.deliveryDate.month, order.deliveryDate.day);
+          final diff = delivDateOnly.difference(todayDateOnly).inDays;
+          if (diff <= 2) {
+            urgentList.add(order);
+          }
+        }
+      }
+      urgentList.sort((a, b) => a.deliveryDate.compareTo(b.deliveryDate));
+      _urgentOrders = urgentList;
+
+      // Fetch customer cache for recent and urgent orders
+      final ordersToCache = {..._recentOrders, ..._urgentOrders};
+      for (final order in ordersToCache) {
         if (!_customerCache.containsKey(order.customerId)) {
-          final cust = await db!.getCustomerById(order.customerId);
+          final cust = await _db!.getCustomerById(order.customerId);
           if (cust != null) {
             _customerCache[order.customerId] = cust;
           }
@@ -88,6 +132,12 @@ class DashboardViewModel extends ChangeNotifier {
 
       notifyListeners();
     });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   // Trigger sync manually

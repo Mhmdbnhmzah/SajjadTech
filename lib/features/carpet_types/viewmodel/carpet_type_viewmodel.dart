@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../core/database/database_helper.dart';
 
 class CarpetTypeViewModel extends ChangeNotifier {
-  final AppDatabase? db;
+  AppDatabase? _db;
+  StreamSubscription? _subscription;
+
+  AppDatabase? get db => _db;
 
   List<CarpetType> _allCarpetTypes = [];
   bool _isLoading = false;
@@ -11,21 +15,44 @@ class CarpetTypeViewModel extends ChangeNotifier {
   List<CarpetType> get carpetTypes => _allCarpetTypes;
   bool get isLoading => _isLoading;
 
-  CarpetTypeViewModel({required this.db}) {
-    _loadCarpetTypes();
+  CarpetTypeViewModel({AppDatabase? db}) {
+    updateDb(db);
+  }
+
+  void updateDb(AppDatabase? newDb) {
+    if (_db == newDb) return;
+
+    _subscription?.cancel();
+    _subscription = null;
+
+    _db = newDb;
+
+    if (_db != null) {
+      _loadCarpetTypes();
+    } else {
+      _allCarpetTypes = [];
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   void _loadCarpetTypes() {
-    if (db == null) return;
+    if (_db == null) return;
 
     _isLoading = true;
     notifyListeners();
 
-    db!.watchCarpetTypes().listen((list) {
+    _subscription = _db!.watchCarpetTypes().listen((list) {
       _allCarpetTypes = list;
       _isLoading = false;
       notifyListeners();
     });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   Future<bool> addCarpetType({

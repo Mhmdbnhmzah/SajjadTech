@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../core/database/database_helper.dart';
@@ -28,8 +29,12 @@ class OrderItemInput {
 }
 
 class OrderViewModel extends ChangeNotifier {
-  final AppDatabase? db;
-  final String laundryName;
+  AppDatabase? _db;
+  StreamSubscription? _subscription;
+  String _laundryName;
+
+  AppDatabase? get db => _db;
+  String get laundryName => _laundryName;
 
   List<Order> _orders = [];
   bool _isLoading = false;
@@ -37,21 +42,49 @@ class OrderViewModel extends ChangeNotifier {
   List<Order> get orders => _orders;
   bool get isLoading => _isLoading;
 
-  OrderViewModel({required this.db, required this.laundryName}) {
-    _loadOrders();
+  OrderViewModel({AppDatabase? db, required String laundryName})
+      : _laundryName = laundryName {
+    updateDb(db, laundryName);
+  }
+
+  void updateDb(AppDatabase? newDb, String newLaundryName) {
+    _laundryName = newLaundryName;
+    if (_db == newDb) {
+      notifyListeners();
+      return;
+    }
+
+    _subscription?.cancel();
+    _subscription = null;
+
+    _db = newDb;
+
+    if (_db != null) {
+      _loadOrders();
+    } else {
+      _orders = [];
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   void _loadOrders() {
-    if (db == null) return;
+    if (_db == null) return;
 
     _isLoading = true;
     notifyListeners();
 
-    db!.watchOrders().listen((list) {
+    _subscription = _db!.watchOrders().listen((list) {
       _orders = list;
       _isLoading = false;
       notifyListeners();
     });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   // Create new order

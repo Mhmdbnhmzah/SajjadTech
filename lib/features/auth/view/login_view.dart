@@ -71,7 +71,7 @@ class _LoginViewState extends State<LoginView> {
               ),
             ),
           ),
-          
+
           // Pattern Overlay (Simulated with soft white circles)
           Positioned(
             top: -100,
@@ -135,27 +135,18 @@ class _LoginViewState extends State<LoginView> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // App Title
                           const Text(
-                            'SajjadTech',
+                            'المغسلة الحديثة للفرش',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
                               color: AppTheme.primaryColor,
-                              letterSpacing: 1.2,
                             ),
                           ),
-                          const Text(
-                            'نظام إدارة مغاسل السجاد SaaS',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppTheme.lightTextSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+
                           const SizedBox(height: 32),
 
                           // Email Input
@@ -166,13 +157,18 @@ class _LoginViewState extends State<LoginView> {
                               keyboardType: TextInputType.emailAddress,
                               decoration: const InputDecoration(
                                 labelText: 'البريد الإلكتروني للمغسلة',
-                                prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryColor),
+                                prefixIcon: Icon(
+                                  Icons.email_outlined,
+                                  color: AppTheme.primaryColor,
+                                ),
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'يرجى إدخال البريد الإلكتروني';
                                 }
-                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                                if (!RegExp(
+                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                ).hasMatch(value.trim())) {
                                   return 'يرجى إدخال بريد إلكتروني صحيح';
                                 }
                                 return null;
@@ -189,10 +185,15 @@ class _LoginViewState extends State<LoginView> {
                               obscureText: _obscurePassword,
                               decoration: InputDecoration(
                                 labelText: 'كلمة المرور',
-                                prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryColor),
+                                prefixIcon: const Icon(
+                                  Icons.lock_outline,
+                                  color: AppTheme.primaryColor,
+                                ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
-                                    _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
                                     color: AppTheme.lightTextSecondary,
                                   ),
                                   onPressed: () {
@@ -233,7 +234,9 @@ class _LoginViewState extends State<LoginView> {
                           authViewModel.isLoading
                               ? const Center(
                                   child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppTheme.primaryColor,
+                                    ),
                                   ),
                                 )
                               : ElevatedButton(

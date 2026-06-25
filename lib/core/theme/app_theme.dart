@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Colors
@@ -28,6 +29,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: GoogleFonts.cairo().fontFamily,
       primaryColor: primaryColor,
       scaffoldBackgroundColor: lightBg,
       cardColor: lightCard,
@@ -117,6 +119,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: GoogleFonts.cairo().fontFamily,
       primaryColor: primaryColor,
       scaffoldBackgroundColor: darkBg,
       cardColor: darkCard,

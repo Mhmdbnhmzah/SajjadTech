@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
 import '../../../core/database/database_helper.dart';
 
 class CustomerViewModel extends ChangeNotifier {
-  final AppDatabase? db;
+  AppDatabase? _db;
+  StreamSubscription? _subscription;
+
+  AppDatabase? get db => _db;
 
   List<Customer> _allCustomers = [];
   List<Customer> _searchResults = [];
@@ -13,22 +17,46 @@ class CustomerViewModel extends ChangeNotifier {
   List<Customer> get allCustomers => _allCustomers;
   bool get isLoading => _isLoading;
 
-  CustomerViewModel({required this.db}) {
-    _loadCustomers();
+  CustomerViewModel({AppDatabase? db}) {
+    updateDb(db);
+  }
+
+  void updateDb(AppDatabase? newDb) {
+    if (_db == newDb) return;
+
+    _subscription?.cancel();
+    _subscription = null;
+
+    _db = newDb;
+
+    if (_db != null) {
+      _loadCustomers();
+    } else {
+      _allCustomers = [];
+      _searchResults = [];
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   void _loadCustomers() {
-    if (db == null) return;
+    if (_db == null) return;
     
     _isLoading = true;
     notifyListeners();
 
-    db!.watchCustomers().listen((list) {
+    _subscription = _db!.watchCustomers().listen((list) {
       _allCustomers = list;
       _searchResults = [];
       _isLoading = false;
       notifyListeners();
     });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   // Search by Name, Phone, or Serial Number

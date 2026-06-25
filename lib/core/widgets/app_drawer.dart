@@ -6,6 +6,7 @@ import '../../features/orders/view/order_list_view.dart';
 import '../../features/customers/view/customer_list_view.dart';
 import '../../features/carpet_types/view/carpet_type_settings_view.dart';
 import '../theme/app_theme.dart';
+import '../../main.dart';
 
 class AppDrawer extends StatelessWidget {
   final String currentRoute;
@@ -14,13 +15,14 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authViewModel = context.watch<AuthViewModel>();
+    final authViewModel = context.read<AuthViewModel>();
     final tenant = authViewModel.currentTenant;
 
     return Drawer(
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header
             UserAccountsDrawerHeader(
@@ -28,15 +30,18 @@ class AppDrawer extends StatelessWidget {
                 color: AppTheme.primaryColor,
               ),
               currentAccountPicture: CircleAvatar(
-                backgroundColor: AppTheme.secondaryColor.withOpacity(0.2),
-                child: const Icon(
-                  Icons.local_laundry_service_outlined,
-                  color: AppTheme.secondaryColor,
-                  size: 40,
+                backgroundColor: Colors.white,
+                child: Text(
+                  tenant?.name.isNotEmpty == true ? tenant!.name[0].toUpperCase() : 'M',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
               ),
               accountName: Text(
-                tenant?.name ?? 'مغسلة سجاد',
+                tenant?.name ?? 'المغسلة',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -153,6 +158,11 @@ class AppDrawer extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
                 authViewModel.logout();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AppHome()),
+                  (route) => false,
+                );
               },
               child: const Text(
                 'تسجيل خروج',

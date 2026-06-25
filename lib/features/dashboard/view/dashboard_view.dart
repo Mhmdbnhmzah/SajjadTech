@@ -9,6 +9,7 @@ import '../../orders/view/order_form_view.dart';
 import '../../orders/view/order_details_view.dart';
 import '../../orders/view/order_list_view.dart';
 import '../../../core/database/database_helper.dart';
+import '../../../main.dart';
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
@@ -255,6 +256,10 @@ class DashboardView extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (dashboardViewModel.urgentOrders.isNotEmpty) ...[
+                      const SizedBox(height: 28),
+                      _buildUrgentAlertsSection(context, dashboardViewModel),
+                    ],
                     const SizedBox(height: 28),
 
                     // --- RECENT ORDERS ---
@@ -560,6 +565,11 @@ class DashboardView extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
                 authViewModel.logout();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AppHome()),
+                  (route) => false,
+                );
               },
               child: const Text(
                 'تسجيل خروج',
@@ -568,6 +578,204 @@ class DashboardView extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildUrgentAlertsSection(
+    BuildContext context,
+    DashboardViewModel viewModel,
+  ) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.error.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.error.withOpacity(0.2),
+          width: 1.5,
+        ),
+      ),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: AppTheme.error,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'تنبيهات اقتراب موعد التسليم (${viewModel.urgentOrders.length})',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.error,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: viewModel.urgentOrders.length,
+            separatorBuilder: (context, index) => const Divider(
+              color: Colors.black12,
+              height: 16,
+            ),
+            itemBuilder: (context, index) {
+              final order = viewModel.urgentOrders[index];
+              final customer = viewModel.getCachedCustomer(order.customerId);
+              
+              // Calculate remaining days
+              final deliveryDay = DateTime(order.deliveryDate.year, order.deliveryDate.month, order.deliveryDate.day);
+              final diff = deliveryDay.difference(today).inDays;
+              
+              String diffText;
+              Color badgeColor;
+              Color textColor = Colors.white;
+              
+              if (diff < 0) {
+                final absDiff = diff.abs();
+                if (absDiff == 1) {
+                  diffText = 'متأخر منذ يوم';
+                } else if (absDiff == 2) {
+                  diffText = 'متأخر منذ يومين';
+                } else if (absDiff > 2 && absDiff <= 10) {
+                  diffText = 'متأخر منذ $absDiff أيام';
+                } else {
+                  diffText = 'متأخر منذ $absDiff يوماً';
+                }
+                badgeColor = AppTheme.error;
+              } else if (diff == 0) {
+                diffText = 'اليوم';
+                badgeColor = AppTheme.warning;
+                textColor = Colors.black87;
+              } else if (diff == 1) {
+                diffText = 'غداً';
+                badgeColor = Colors.orange;
+              } else {
+                diffText = 'بعد يومين';
+                badgeColor = Colors.amber;
+                textColor = Colors.black87;
+              }
+              
+              final authViewModel = context.read<AuthViewModel>();
+              final prefix = authViewModel.currentTenant?.laundryCode ?? 'أ';
+              
+              String statusText;
+              Color statusColor;
+              if (order.status == 'received') {
+                statusText = 'قيد الغسيل';
+                statusColor = AppTheme.primaryColor;
+              } else {
+                statusText = 'جاهز';
+                statusColor = AppTheme.warning;
+              }
+              
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OrderDetailsView(order: order),
+                    ),
+                  );
+                },
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            customer?.name ?? 'جاري التحميل...',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                'ملف: ${customer != null ? "$prefix-${customer.serialNumber}" : "..."}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? AppTheme.darkTextSecondary
+                                      : AppTheme.lightTextSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                '${order.itemCount} قطع سجاد',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? AppTheme.darkTextSecondary
+                                      : AppTheme.lightTextSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: badgeColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            diffText,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            statusText,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: statusColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

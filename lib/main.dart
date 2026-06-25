@@ -29,26 +29,24 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<AuthViewModel>(create: (_) => AuthViewModel()),
         ChangeNotifierProxyProvider<AuthViewModel, DashboardViewModel>(
           create: (_) => DashboardViewModel(db: null),
-          update: (_, auth, previous) => DashboardViewModel(db: auth.database),
+          update: (_, auth, previous) => previous!..updateDb(auth.database),
         ),
         ChangeNotifierProxyProvider<AuthViewModel, CustomerViewModel>(
           create: (_) => CustomerViewModel(db: null),
-          update: (_, auth, previous) => CustomerViewModel(db: auth.database),
+          update: (_, auth, previous) => previous!..updateDb(auth.database),
         ),
         ChangeNotifierProxyProvider<AuthViewModel, OrderViewModel>(
           create: (_) => OrderViewModel(db: null, laundryName: 'مغسلة سجاد'),
-          update: (_, auth, previous) => OrderViewModel(
-            db: auth.database,
-            laundryName: auth.currentTenant?.name ?? 'مغسلة سجاد',
-          ),
+          update: (_, auth, previous) => previous!
+            ..updateDb(auth.database, auth.currentTenant?.name ?? 'مغسلة سجاد'),
         ),
         ChangeNotifierProxyProvider<AuthViewModel, CarpetTypeViewModel>(
           create: (_) => CarpetTypeViewModel(db: null),
-          update: (_, auth, previous) => CarpetTypeViewModel(db: auth.database),
+          update: (_, auth, previous) => previous!..updateDb(auth.database),
         ),
       ],
       child: MaterialApp(
-        title: 'SajjadTech',
+        title: 'المغسلة الحديثة للفرش',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
