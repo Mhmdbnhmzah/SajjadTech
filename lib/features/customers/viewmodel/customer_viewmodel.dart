@@ -13,7 +13,9 @@ class CustomerViewModel extends ChangeNotifier {
   List<Customer> _searchResults = [];
   bool _isLoading = false;
 
-  List<Customer> get customers => _searchResults.isEmpty && _allCustomers.isNotEmpty ? _allCustomers : _searchResults;
+  String _searchQuery = '';
+
+  List<Customer> get customers => _searchQuery.isEmpty ? _allCustomers : _searchResults;
   List<Customer> get allCustomers => _allCustomers;
   bool get isLoading => _isLoading;
 
@@ -34,6 +36,7 @@ class CustomerViewModel extends ChangeNotifier {
     } else {
       _allCustomers = [];
       _searchResults = [];
+      _searchQuery = '';
       _isLoading = false;
       notifyListeners();
     }
@@ -47,9 +50,13 @@ class CustomerViewModel extends ChangeNotifier {
 
     _subscription = _db!.watchCustomers().listen((list) {
       _allCustomers = list;
-      _searchResults = [];
       _isLoading = false;
-      notifyListeners();
+      if (_searchQuery.isNotEmpty) {
+        searchCustomers(_searchQuery);
+      } else {
+        _searchResults = [];
+        notifyListeners();
+      }
     });
   }
 
@@ -61,7 +68,8 @@ class CustomerViewModel extends ChangeNotifier {
 
   // Search by Name, Phone, or Serial Number
   void searchCustomers(String query) {
-    if (query.trim().isEmpty) {
+    _searchQuery = query.trim();
+    if (_searchQuery.isEmpty) {
       _searchResults = [];
       notifyListeners();
       return;

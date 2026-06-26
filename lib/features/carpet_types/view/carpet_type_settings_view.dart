@@ -225,10 +225,13 @@ class _CarpetTypeSettingsViewState extends State<CarpetTypeSettingsView> {
 
     final body = Directionality(
       textDirection: TextDirection.rtl,
-      child: carpetVm.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : carpetVm.carpetTypes.isEmpty
-              ? _buildEmptyState()
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 750),
+          child: carpetVm.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : carpetVm.carpetTypes.isEmpty
+                  ? _buildEmptyState()
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: carpetVm.carpetTypes.length,
@@ -266,7 +269,10 @@ class _CarpetTypeSettingsViewState extends State<CarpetTypeSettingsView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 4),
-                            Row(
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -280,7 +286,6 @@ class _CarpetTypeSettingsViewState extends State<CarpetTypeSettingsView> {
                                     style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
                                   ),
                                 ),
-                                const SizedBox(width: 10),
                                 Text(
                                   isUnit
                                       ? '${type.price.toStringAsFixed(0)} ر.ي / حبة'
@@ -311,6 +316,8 @@ class _CarpetTypeSettingsViewState extends State<CarpetTypeSettingsView> {
                     );
                   },
                 ),
+            ),
+          ),
     );
 
     if (widget.isEmbedded) {
@@ -354,21 +361,22 @@ class _CarpetTypeSettingsViewState extends State<CarpetTypeSettingsView> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.style_outlined,
-              size: 72,
+              size: 48,
               color: Colors.grey.shade400,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'لا توجد أنواع سجاد مضافة حالياً',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.bold,
               ),
@@ -378,7 +386,7 @@ class _CarpetTypeSettingsViewState extends State<CarpetTypeSettingsView> {
               'اضغط على الزر بالأسفل لإضافة أول نوع سجاد وحدد سعره بالحبة أو بالمتر المربع',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 color: Colors.grey.shade400,
               ),
             ),

@@ -72,6 +72,11 @@ class _CustomerListViewState extends State<CustomerListView> {
                     if (value == null || value.trim().isEmpty) {
                       return 'يرجى إدخال رقم الجوال';
                     }
+                    final phoneRegex = RegExp(r'^(00967|\+?967)?(7\d{8}|07\d{8})$');
+                    final cleaned = value.trim().replaceAll(RegExp(r'[^\d\+]'), '');
+                    if (!phoneRegex.hasMatch(cleaned)) {
+                      return 'يرجى إدخال رقم هاتف يمني صحيح';
+                    }
                     return null;
                   },
                 ),
@@ -208,8 +213,11 @@ class _CustomerListViewState extends State<CustomerListView> {
 
     final bodyContent = Directionality(
       textDirection: TextDirection.rtl,
-      child: Column(
-        children: [
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Column(
+            children: [
           // Search Field
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -291,7 +299,9 @@ class _CustomerListViewState extends State<CustomerListView> {
                         },
                       ),
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
 
@@ -332,21 +342,22 @@ class _CustomerListViewState extends State<CustomerListView> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.people_alt_outlined,
-              size: 72,
+              size: 48,
               color: Colors.grey.shade400,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'لا يوجد عملاء مطابقين للبحث',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.bold,
               ),
@@ -356,7 +367,7 @@ class _CustomerListViewState extends State<CustomerListView> {
               'اضغط على الزر بالأسفل لتسجيل أول عميل في النظام',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 color: Colors.grey.shade400,
               ),
             ),

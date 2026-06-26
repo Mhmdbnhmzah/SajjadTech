@@ -32,7 +32,6 @@ class $CustomersTable extends Customers
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
-    $customConstraints: 'UNIQUE NOT NULL',
   );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override

@@ -187,7 +187,6 @@ class OrderViewModel extends ChangeNotifier {
     try {
       final updatedOrder = order.copyWith(
         status: newStatus,
-        paidAmount: newStatus == 'delivered' ? order.totalPrice : order.paidAmount,
         updatedAt: DateTime.now(),
         synced: false,
       );
@@ -295,6 +294,7 @@ class OrderViewModel extends ChangeNotifier {
     final msg = WhatsappService.getOrderDeliveredMessage(
       customerName: customer.name,
       totalPrice: latestOrder.totalPrice,
+      paidAmount: latestOrder.paidAmount,
       laundryName: laundryName,
     );
 

@@ -8,7 +8,7 @@ part 'database_helper.g.dart';
 
 class Customers extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get serialNumber => integer().customConstraint('UNIQUE NOT NULL')();
+  IntColumn get serialNumber => integer()();
   TextColumn get name => text().withLength(min: 1, max: 100)();
   TextColumn get phone => text().withLength(min: 5, max: 20)();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
@@ -72,7 +72,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(this.tenantId) : super(_openConnection(tenantId));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -86,6 +86,17 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await m.addColumn(orders, orders.paidAmount);
+          }
+          if (from < 4) {
+            await m.database.customStatement('PRAGMA foreign_keys=OFF;');
+            await m.database.customStatement('ALTER TABLE customers RENAME TO _customers_old;');
+            await m.createTable(customers);
+            await m.database.customStatement(
+              'INSERT INTO customers (id, serial_number, name, phone, created_at, updated_at, synced, is_deleted) '
+              'SELECT id, serial_number, name, phone, created_at, updated_at, synced, is_deleted FROM _customers_old;'
+            );
+            await m.database.customStatement('DROP TABLE _customers_old;');
+            await m.database.customStatement('PRAGMA foreign_keys=ON;');
           }
         },
       );
@@ -134,17 +145,41 @@ class AppDatabase extends _$AppDatabase {
 
   // Soft delete customer
   Future<int> softDeleteCustomer(int id) {
-    return (update(customers)..where((t) => t.id.equals(id))).write(
-      const CustomersCompanion(
-        isDeleted: Value(true),
-        synced: Value(false),
-      ),
-    );
+    return transaction(() async {
+      final customerOrders = await (select(orders)..where((t) => t.customerId.equals(id))).get();
+      for (final order in customerOrders) {
+        await (update(orderItems)..where((t) => t.orderId.equals(order.id))).write(
+          const OrderItemsCompanion(
+            isDeleted: Value(true),
+            synced: Value(false),
+          ),
+        );
+      }
+      await (update(orders)..where((t) => t.customerId.equals(id))).write(
+        const OrdersCompanion(
+          isDeleted: Value(true),
+          synced: Value(false),
+        ),
+      );
+      return (update(customers)..where((t) => t.id.equals(id))).write(
+        const CustomersCompanion(
+          isDeleted: Value(true),
+          synced: Value(false),
+        ),
+      );
+    });
   }
 
   // Hard delete customer (after sync)
   Future<int> hardDeleteCustomer(int id) {
-    return (delete(customers)..where((t) => t.id.equals(id))).go();
+    return transaction(() async {
+      final customerOrders = await (select(orders)..where((t) => t.customerId.equals(id))).get();
+      for (final order in customerOrders) {
+        await (delete(orderItems)..where((t) => t.orderId.equals(order.id))).go();
+      }
+      await (delete(orders)..where((t) => t.customerId.equals(id))).go();
+      return (delete(customers)..where((t) => t.id.equals(id))).go();
+    });
   }
 
   // --- ORDER QUERIES ---
@@ -182,17 +217,28 @@ class AppDatabase extends _$AppDatabase {
 
   // Soft delete order
   Future<int> softDeleteOrder(int id) {
-    return (update(orders)..where((t) => t.id.equals(id))).write(
-      const OrdersCompanion(
-        isDeleted: Value(true),
-        synced: Value(false),
-      ),
-    );
+    return transaction(() async {
+      await (update(orderItems)..where((t) => t.orderId.equals(id))).write(
+        const OrderItemsCompanion(
+          isDeleted: Value(true),
+          synced: Value(false),
+        ),
+      );
+      return (update(orders)..where((t) => t.id.equals(id))).write(
+        const OrdersCompanion(
+          isDeleted: Value(true),
+          synced: Value(false),
+        ),
+      );
+    });
   }
 
   // Hard delete order (after sync)
   Future<int> hardDeleteOrder(int id) {
-    return (delete(orders)..where((t) => t.id.equals(id))).go();
+    return transaction(() async {
+      await (delete(orderItems)..where((t) => t.orderId.equals(id))).go();
+      return (delete(orders)..where((t) => t.id.equals(id))).go();
+    });
   }
 
   // --- CARPET TYPE QUERIES ---

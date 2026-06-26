@@ -102,146 +102,152 @@ class _LoginViewState extends State<LoginView> {
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Hero(
-                tag: 'auth_card',
-                child: Card(
-                  elevation: 10,
-                  shadowColor: Colors.black45,
-                  color: Colors.white.withOpacity(0.95),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 36.0,
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // App Logo / Icon
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppTheme.primaryColor,
-                            ),
-                            child: const Icon(
-                              Icons.local_laundry_service_outlined,
-                              size: 48,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // App Title
-                          const Text(
-                            'المغسلة الحديثة للفرش',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-
-                          const SizedBox(height: 32),
-
-                          // Email Input
-                          Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                labelText: 'البريد الإلكتروني للمغسلة',
-                                prefixIcon: Icon(
-                                  Icons.email_outlined,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 450),
+                child: Hero(
+                  tag: 'auth_card',
+                  child: Card(
+                    elevation: 10,
+                    shadowColor: Colors.black45,
+                    color: Colors.white.withOpacity(0.95),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 36.0,
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Image.asset(
+                              'assets/icons/app_icon2.png',
+                              height: 96,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
                                   color: AppTheme.primaryColor,
                                 ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'يرجى إدخال البريد الإلكتروني';
-                                }
-                                if (!RegExp(
-                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                ).hasMatch(value.trim())) {
-                                  return 'يرجى إدخال بريد إلكتروني صحيح';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Password Input
-                          Directionality(
-                            textDirection: TextDirection.rtl,
-                            child: TextFormField(
-                              controller: _passwordController,
-                              obscureText: _obscurePassword,
-                              decoration: InputDecoration(
-                                labelText: 'كلمة المرور',
-                                prefixIcon: const Icon(
-                                  Icons.lock_outline,
-                                  color: AppTheme.primaryColor,
+                                child: const Icon(
+                                  Icons.local_laundry_service_outlined,
+                                  size: 48,
+                                  color: Colors.white,
                                 ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
-                                    color: AppTheme.lightTextSecondary,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'يرجى إدخال كلمة المرور';
-                                }
-                                if (value.length < 6) {
-                                  return 'كلمة المرور يجب أن تكون 6 خانات على الأقل';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Error Message if any
-                          if (authViewModel.errorMessage != null) ...[
-                            Text(
-                              authViewModel.errorMessage!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: AppTheme.error,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
                               ),
                             ),
                             const SizedBox(height: 16),
-                          ],
 
-                          // Login Button
-                          authViewModel.isLoading
-                              ? const Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppTheme.primaryColor,
-                                    ),
+                            // App Title
+                            const Text(
+                              'المغسلة الحديثة للفرش',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+
+                            const SizedBox(height: 32),
+
+                            // Email Input
+                            Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                decoration: const InputDecoration(
+                                  labelText: 'البريد الإلكتروني للمغسلة',
+                                  prefixIcon: Icon(
+                                    Icons.email_outlined,
+                                    color: AppTheme.primaryColor,
                                   ),
-                                )
-                              : ElevatedButton(
-                                  onPressed: _handleLogin,
-                                  child: const Text('تسجيل الدخول'),
                                 ),
-                        ],
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'يرجى إدخال البريد الإلكتروني';
+                                  }
+                                  if (!RegExp(
+                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                  ).hasMatch(value.trim())) {
+                                    return 'يرجى إدخال بريد إلكتروني صحيح';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Password Input
+                            Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                decoration: InputDecoration(
+                                  labelText: 'كلمة المرور',
+                                  prefixIcon: const Icon(
+                                    Icons.lock_outline,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                      color: AppTheme.lightTextSecondary,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _obscurePassword = !_obscurePassword;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'يرجى إدخال كلمة المرور';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'كلمة المرور يجب أن تكون 6 خانات على الأقل';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Error Message if any
+                            if (authViewModel.errorMessage != null) ...[
+                              Text(
+                                authViewModel.errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: AppTheme.error,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+
+                            // Login Button
+                            authViewModel.isLoading
+                                ? const Center(
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppTheme.primaryColor,
+                                      ),
+                                    ),
+                                  )
+                                : ElevatedButton(
+                                    onPressed: _handleLogin,
+                                    child: const Text('تسجيل الدخول'),
+                                  ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

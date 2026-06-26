@@ -87,7 +87,7 @@ class DashboardViewModel extends ChangeNotifier {
             orderDate.day == now.day;
 
         if (isToday) {
-          income += order.totalPrice;
+          income += order.paidAmount;
         }
 
         if (order.status == 'delivered' && isToday) {
@@ -121,12 +121,13 @@ class DashboardViewModel extends ChangeNotifier {
 
       // Fetch customer cache for recent and urgent orders
       final ordersToCache = {..._recentOrders, ..._urgentOrders};
+      final activeCustomerIds = ordersToCache.map((o) => o.customerId).toSet();
+      _customerCache.removeWhere((id, _) => !activeCustomerIds.contains(id));
+      
       for (final order in ordersToCache) {
-        if (!_customerCache.containsKey(order.customerId)) {
-          final cust = await _db!.getCustomerById(order.customerId);
-          if (cust != null) {
-            _customerCache[order.customerId] = cust;
-          }
+        final cust = await _db!.getCustomerById(order.customerId);
+        if (cust != null) {
+          _customerCache[order.customerId] = cust;
         }
       }
 

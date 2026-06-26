@@ -60,6 +60,12 @@ class SyncService {
         final data = doc.data();
         final id = data['id'] as int;
         
+        final isDeletedCloud = data['isDeleted'] as bool? ?? false;
+        if (isDeletedCloud) {
+          await db.hardDeleteCustomer(id);
+          continue;
+        }
+
         // Skip overwriting local records if they have unsynced changes
         final existing = await db.getCustomerById(id);
         if (existing != null && !existing.synced) {
@@ -99,6 +105,12 @@ class SyncService {
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final id = data['id'] as int;
+
+        final isDeletedCloud = data['isDeleted'] as bool? ?? false;
+        if (isDeletedCloud) {
+          await db.hardDeleteOrder(id);
+          continue;
+        }
 
         // Skip overwriting local records if they have unsynced changes
         final existing = await db.getOrderById(id);
@@ -147,8 +159,16 @@ class SyncService {
             .doc(customer.id.toString());
 
         if (customer.isDeleted) {
-          // Delete from Firestore
-          await docRef.delete();
+          // Soft delete in Firestore
+          await docRef.set({
+            'id': customer.id,
+            'serialNumber': customer.serialNumber,
+            'name': customer.name,
+            'phone': customer.phone,
+            'createdAt': customer.createdAt.toIso8601String(),
+            'updatedAt': customer.updatedAt.toIso8601String(),
+            'isDeleted': true,
+          });
           // Hard delete from SQLite locally
           await db.hardDeleteCustomer(customer.id);
         } else {
@@ -160,6 +180,7 @@ class SyncService {
             'phone': customer.phone,
             'createdAt': customer.createdAt.toIso8601String(),
             'updatedAt': customer.updatedAt.toIso8601String(),
+            'isDeleted': false,
           });
           // Update local status to synced = true
           await db.updateCustomerData(customer.copyWith(synced: true));
@@ -181,8 +202,24 @@ class SyncService {
             .doc(order.id.toString());
 
         if (order.isDeleted) {
-          // Delete from Firestore
-          await docRef.delete();
+          // Soft delete in Firestore
+          await docRef.set({
+            'id': order.id,
+            'customerId': order.customerId,
+            'totalPrice': order.totalPrice,
+            'paidAmount': order.paidAmount,
+            'itemCount': order.itemCount,
+            'status': order.status,
+            'receivedDate': order.receivedDate.toIso8601String(),
+            'deliveryDate': order.deliveryDate.toIso8601String(),
+            'notes': order.notes,
+            'whatsappSentReceived': order.whatsappSentReceived,
+            'whatsappSentReady': order.whatsappSentReady,
+            'whatsappSentDelivered': order.whatsappSentDelivered,
+            'createdAt': order.createdAt.toIso8601String(),
+            'updatedAt': order.updatedAt.toIso8601String(),
+            'isDeleted': true,
+          });
           // Hard delete from SQLite locally
           await db.hardDeleteOrder(order.id);
         } else {
@@ -202,6 +239,7 @@ class SyncService {
             'whatsappSentDelivered': order.whatsappSentDelivered,
             'createdAt': order.createdAt.toIso8601String(),
             'updatedAt': order.updatedAt.toIso8601String(),
+            'isDeleted': false,
           });
           // Update local status to synced = true
           await db.updateOrderData(order.copyWith(synced: true));
@@ -223,6 +261,12 @@ class SyncService {
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final id = data['id'] as int;
+
+        final isDeletedCloud = data['isDeleted'] as bool? ?? false;
+        if (isDeletedCloud) {
+          await db.hardDeleteCarpetType(id);
+          continue;
+        }
 
         final existing = await db.getCarpetTypeById(id);
         if (existing != null && !existing.synced) {
@@ -261,6 +305,12 @@ class SyncService {
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final id = data['id'] as int;
+
+        final isDeletedCloud = data['isDeleted'] as bool? ?? false;
+        if (isDeletedCloud) {
+          await db.hardDeleteOrderItem(id);
+          continue;
+        }
 
         final existing = await db.getOrderItemById(id);
         if (existing != null && !existing.synced) {
@@ -306,7 +356,15 @@ class SyncService {
             .doc(type.id.toString());
 
         if (type.isDeleted) {
-          await docRef.delete();
+          await docRef.set({
+            'id': type.id,
+            'name': type.name,
+            'pricingType': type.pricingType,
+            'price': type.price,
+            'createdAt': type.createdAt.toIso8601String(),
+            'updatedAt': type.updatedAt.toIso8601String(),
+            'isDeleted': true,
+          });
           await db.hardDeleteCarpetType(type.id);
         } else {
           await docRef.set({
@@ -316,6 +374,7 @@ class SyncService {
             'price': type.price,
             'createdAt': type.createdAt.toIso8601String(),
             'updatedAt': type.updatedAt.toIso8601String(),
+            'isDeleted': false,
           });
           await db.updateCarpetTypeData(type.copyWith(synced: true));
         }
@@ -336,7 +395,22 @@ class SyncService {
             .doc(item.id.toString());
 
         if (item.isDeleted) {
-          await docRef.delete();
+          await docRef.set({
+            'id': item.id,
+            'orderId': item.orderId,
+            'carpetTypeId': item.carpetTypeId,
+            'name': item.name,
+            'pricingType': item.pricingType,
+            'unitPrice': item.unitPrice,
+            'quantity': item.quantity,
+            'length': item.length,
+            'width': item.width,
+            'area': item.area,
+            'totalPrice': item.totalPrice,
+            'createdAt': item.createdAt.toIso8601String(),
+            'updatedAt': item.updatedAt.toIso8601String(),
+            'isDeleted': true,
+          });
           await db.hardDeleteOrderItem(item.id);
         } else {
           await docRef.set({
@@ -353,6 +427,7 @@ class SyncService {
             'totalPrice': item.totalPrice,
             'createdAt': item.createdAt.toIso8601String(),
             'updatedAt': item.updatedAt.toIso8601String(),
+            'isDeleted': false,
           });
           await db.updateOrderItemData(item.copyWith(synced: true));
         }

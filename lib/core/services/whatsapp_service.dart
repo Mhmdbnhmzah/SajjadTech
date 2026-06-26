@@ -2,17 +2,31 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 
 class WhatsappService {
-  // Utility method to clean and format the phone number
+  // Utility method to clean and format the phone number robustly
   static String formatPhoneNumber(String phone) {
-    // Remove spaces, dashes, or non-numeric characters except +
+    // Remove all non-digits
     String cleaned = phone.replaceAll(RegExp(r'[^\d]'), '');
 
-    // Default country code (e.g., 967 for Saudi Arabia)
+    // Strip leading double zeros 00
+    if (cleaned.startsWith('00')) {
+      cleaned = cleaned.substring(2);
+    }
+
+    // If it starts with 967, it is already formatted
+    if (cleaned.startsWith('967')) {
+      return cleaned;
+    }
+
+    // If it starts with a single 0 (e.g., 077XXXXXXX), strip the 0
     if (cleaned.startsWith('0')) {
-      cleaned = '967${cleaned.substring(1)}';
-    } else if (!cleaned.startsWith('967') && cleaned.length == 9) {
+      cleaned = cleaned.substring(1);
+    }
+
+    // If it is 9 digits and starts with 7, add country code
+    if (cleaned.length == 9 && cleaned.startsWith('7')) {
       cleaned = '967$cleaned';
     }
+
     return cleaned;
   }
 
@@ -94,13 +108,22 @@ $paymentStatusStr
   static String getOrderDeliveredMessage({
     required String customerName,
     required double totalPrice,
+    required double paidAmount,
     required String laundryName,
   }) {
+    final remaining = totalPrice - paidAmount;
+    final String paymentStatusStr = remaining <= 0
+        ? '💵 *حالة الدفع:* تم دفع الحساب بالكامل (شكراً لك! ✓)'
+        : '💰 *القيمة الإجمالية للطلب:* ${totalPrice.toStringAsFixed(0)} ريال\n'
+          '💵 *المبلغ المدفوع:* ${paidAmount.toStringAsFixed(0)} ريال\n'
+          '⏳ *المبلغ المتبقي (آجل):* ${remaining.toStringAsFixed(0)} ريال';
+
     return '''
 مرحباً يا *$customerName* 👋
 
 تم تسليم السجاد وتأكيد عملية الاستلام بنجاح في *مغسلة $laundryName*.
-💰 *القيمة الإجمالية للطلب:* ${totalPrice.toStringAsFixed(0)} ريال (تم تحصيل الحساب بالكامل)
+
+$paymentStatusStr
 
 شكراً لتعاملك معنا وثقتك الغالية. نتطلع لخدمتك مرة أخرى! ❤️🧼
 ''';

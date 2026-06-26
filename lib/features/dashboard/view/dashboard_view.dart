@@ -31,231 +31,249 @@ class DashboardView extends StatelessWidget {
 class _DashboardContent extends StatelessWidget {
   const _DashboardContent();
 
+
   @override
   Widget build(BuildContext context) {
     final dashboardViewModel = context.watch<DashboardViewModel>();
 
     return Directionality(
-        textDirection: TextDirection.rtl,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Sync Message Status Banner
-              if (dashboardViewModel.syncMessage != null)
-                Container(
-                  color: dashboardViewModel.syncMessage!.contains('فشلت')
-                      ? AppTheme.error.withOpacity(0.9)
-                      : AppTheme.success.withOpacity(0.9),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 16,
-                  ),
-                  child: Text(
-                    dashboardViewModel.syncMessage!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+      textDirection: TextDirection.rtl,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Sync Message Status Banner
+                if (dashboardViewModel.syncMessage != null)
+                  Container(
+                    color: dashboardViewModel.syncMessage!.contains('فشلت')
+                        ? AppTheme.error.withOpacity(0.9)
+                        : AppTheme.success.withOpacity(0.9),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 16,
                     ),
-                  ),
-                ),
-
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // --- STATISTICS GRID ---
-                    GridView.count(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      childAspectRatio: 1.3,
-                      children: [
-                        _buildStatCard(
-                          context,
-                          title: 'طلبات قيد الغسيل',
-                          value: '${dashboardViewModel.receivedCount}',
-                          icon: Icons.local_laundry_service_outlined,
-                          color: AppTheme.primaryColor,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const OrderListView(
-                                  initialStatus: 'received',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildStatCard(
-                          context,
-                          title: 'طلبات جاهزة للتسليم',
-                          value: '${dashboardViewModel.readyCount}',
-                          icon: Icons.check_circle_outline,
-                          color: AppTheme.warning,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const OrderListView(initialStatus: 'ready'),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildStatCard(
-                          context,
-                          title: 'الطلبات المسلمة اليوم',
-                          value: '${dashboardViewModel.deliveredTodayCount}',
-                          icon: Icons.delivery_dining_outlined,
-                          color: AppTheme.success,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const OrderListView(
-                                  initialStatus: 'delivered',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildStatCard(
-                          context,
-                          title: 'دخل اليوم المتوقع',
-                          value: '${dashboardViewModel.todayIncome} ر.ي',
-                          icon: Icons.payments_outlined,
-                          color: AppTheme.secondaryColor,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const OrderListView(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // --- QUICK ACTIONS ---
-                    const Text(
-                      'إجراءات سريعة',
-                      style: TextStyle(
-                        fontSize: 18,
+                    child: Text(
+                      dashboardViewModel.syncMessage!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.lightTextPrimary,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const OrderFormView(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.add_shopping_cart,
-                              color: Colors.white,
-                            ),
-                            label: const Text('طلب جديد'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.success,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const CustomerListView(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.people_outline,
-                              color: Colors.white,
-                            ),
-                            label: const Text('العملاء'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (dashboardViewModel.urgentOrders.isNotEmpty) ...[
-                      const SizedBox(height: 28),
-                      _buildUrgentAlertsSection(context, dashboardViewModel),
-                    ],
-                    const SizedBox(height: 28),
+                  ),
 
-                    // --- RECENT ORDERS ---
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'آخر الطلبات المضافة',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.lightTextPrimary,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const OrderListView(),
-                              ),
-                            );
-                          },
-                          child: const Text('عرض الكل'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    dashboardViewModel.recentOrders.isEmpty
-                        ? _buildEmptyState(context)
-                        : ListView.separated(
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // --- STATISTICS GRID ---
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final width = constraints.maxWidth;
+                          final crossAxisCount = width > 750
+                              ? 4
+                              : (width > 500 ? 3 : 2);
+                          final aspectRatio = width > 750
+                              ? 1.5
+                              : (width > 500 ? 1.35 : 1.15);
+
+                          return GridView.count(
+                            crossAxisCount: crossAxisCount,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: dashboardViewModel.recentOrders.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final order =
-                                  dashboardViewModel.recentOrders[index];
-                              final customer = dashboardViewModel
-                                  .getCachedCustomer(order.customerId);
-                              return _buildOrderTile(context, order, customer);
-                            },
+                            childAspectRatio: aspectRatio,
+                            children: [
+                              _buildStatCard(
+                                context,
+                                title: 'طلبات قيد الغسيل',
+                                value: '${dashboardViewModel.receivedCount}',
+                                icon: Icons.local_laundry_service_outlined,
+                                color: AppTheme.primaryColor,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const OrderListView(
+                                        initialStatus: 'received',
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              _buildStatCard(
+                                context,
+                                title: 'طلبات جاهزة للتسليم',
+                                value: '${dashboardViewModel.readyCount}',
+                                icon: Icons.check_circle_outline,
+                                color: AppTheme.warning,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const OrderListView(initialStatus: 'ready'),
+                                    ),
+                                  );
+                                },
+                              ),
+                              _buildStatCard(
+                                context,
+                                title: 'الطلبات المسلمة اليوم',
+                                value: '${dashboardViewModel.deliveredTodayCount}',
+                                icon: Icons.delivery_dining_outlined,
+                                color: AppTheme.success,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const OrderListView(
+                                        initialStatus: 'delivered',
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              _buildStatCard(
+                                context,
+                                title: 'دخل اليوم المتوقع',
+                                value: '${dashboardViewModel.todayIncome} ر.ي',
+                                icon: Icons.payments_outlined,
+                                color: AppTheme.secondaryColor,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const OrderListView(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      // --- QUICK ACTIONS ---
+                      const Text(
+                        'إجراءات سريعة',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.lightTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const OrderFormView(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.add_shopping_cart,
+                                color: Colors.white,
+                              ),
+                              label: const Text('طلب جديد'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.success,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
                           ),
-                  ],
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CustomerListView(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.people_outline,
+                                color: Colors.white,
+                              ),
+                              label: const Text('العملاء'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (dashboardViewModel.urgentOrders.isNotEmpty) ...[
+                        const SizedBox(height: 28),
+                        _buildUrgentAlertsSection(context, dashboardViewModel),
+                      ],
+                      const SizedBox(height: 28),
+
+                      // --- RECENT ORDERS ---
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'آخر الطلبات المضافة',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.lightTextPrimary,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const OrderListView(),
+                                ),
+                              );
+                            },
+                            child: const Text('عرض الكل'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      dashboardViewModel.recentOrders.isEmpty
+                          ? _buildEmptyState(context)
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: dashboardViewModel.recentOrders.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final order =
+                                    dashboardViewModel.recentOrders[index];
+                                final customer = dashboardViewModel
+                                    .getCachedCustomer(order.customerId);
+                                return _buildOrderTile(context, order, customer);
+                              },
+                            ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
     );
   }
 
@@ -273,7 +291,7 @@ class _DashboardContent extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +299,7 @@ class _DashboardContent extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(icon, color: color, size: 28),
+                  Icon(icon, color: color, size: 24),
                   Container(
                     width: 8,
                     height: 8,
@@ -298,14 +316,14 @@ class _DashboardContent extends StatelessWidget {
                   Text(
                     value,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: AppTheme.lightTextSecondary,
                     ),
                     overflow: TextOverflow.ellipsis,

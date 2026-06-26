@@ -96,6 +96,11 @@ class _OrderFormViewState extends State<OrderFormView> {
                     if (value == null || value.trim().isEmpty) {
                       return 'يرجى إدخال رقم الجوال';
                     }
+                    final phoneRegex = RegExp(r'^(00967|\+?967)?(7\d{8}|07\d{8})$');
+                    final cleaned = value.trim().replaceAll(RegExp(r'[^\d\+]'), '');
+                    if (!phoneRegex.hasMatch(cleaned)) {
+                      return 'يرجى إدخال رقم هاتف يمني صحيح';
+                    }
                     return null;
                   },
                 ),
@@ -276,9 +281,12 @@ class _OrderFormViewState extends State<OrderFormView> {
       ),
       body: Directionality(
         textDirection: TextDirection.rtl,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 750),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // --- STEP 1: SELECT CUSTOMER ---
@@ -706,7 +714,9 @@ class _OrderFormViewState extends State<OrderFormView> {
           ),
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildCarpetItemRow(int index, List<CarpetType> types) {
@@ -764,7 +774,6 @@ class _OrderFormViewState extends State<OrderFormView> {
                 icon: const Icon(Icons.delete_outline, color: AppTheme.error),
                 onPressed: () {
                   setState(() {
-                    item.dispose();
                     _carpetItems.removeAt(index);
                     _recalculateTotals();
                   });
@@ -824,7 +833,7 @@ class _OrderFormViewState extends State<OrderFormView> {
                 ],
               )
             else ...[
-              // Row 1: Length & Width
+              // Row 1: Length, Width & Price/m² (No Quantity Field for Meter Items)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -862,33 +871,6 @@ class _OrderFormViewState extends State<OrderFormView> {
                           return 'مطلوب';
                         }
                         if (double.tryParse(value) == null || double.parse(value) <= 0) {
-                          return 'غير صحيح';
-                        }
-                        return null;
-                      },
-                      onChanged: (_) => setState(() => _recalculateTotals()),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Row 2: Quantity & Price
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: item.quantityController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'الكمية',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'مطلوب';
-                        }
-                        if (int.tryParse(value) == null || int.parse(value) <= 0) {
                           return 'غير صحيح';
                         }
                         return null;
@@ -953,21 +935,23 @@ class _OrderFormViewState extends State<OrderFormView> {
       final rate = double.tryParse(item.priceController.text) ?? 0.0;
       if (item.selectedType!.pricingType == 'unit') {
         final qty = int.tryParse(item.quantityController.text) ?? 0;
-        item.itemTotal = rate * qty;
+        item.itemTotal = (rate * qty).roundToDouble();
         totalC += qty;
       } else {
         final len = double.tryParse(item.lengthController.text) ?? 0.0;
         final wid = double.tryParse(item.widthController.text) ?? 0.0;
-        final qty = int.tryParse(item.quantityController.text) ?? 1;
-        item.itemTotal = rate * len * wid * qty;
-        totalC += qty;
+        item.itemTotal = (rate * len * wid).roundToDouble();
+        totalC += 1; // Meter item represents exactly 1 piece
       }
       totalP += item.itemTotal;
     }
 
     if (_carpetItems.isNotEmpty) {
-      _priceController.text = totalP.toStringAsFixed(1);
+      _priceController.text = totalP.toStringAsFixed(0);
       _countController.text = totalC.toString();
+    } else {
+      _priceController.text = '0';
+      _countController.text = '0';
     }
   }
 }

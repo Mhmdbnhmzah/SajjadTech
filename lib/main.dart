@@ -52,9 +52,7 @@ class MyApp extends StatelessWidget {
         themeMode: ThemeMode.light,
         debugShowCheckedModeBanner: false,
         locale: const Locale('ar'),
-        supportedLocales: const [
-          Locale('ar'),
-        ],
+        supportedLocales: const [Locale('ar')],
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
