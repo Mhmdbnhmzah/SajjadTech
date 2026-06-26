@@ -234,7 +234,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                         border: Border.all(color: statusColor.withOpacity(0.3)),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Row(
                             children: [
@@ -250,14 +250,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                               ),
                             ],
                           ),
-                          Text(
-                            _currentOrder.synced ? '☁️ متزامن' : '💾 محلي فقط',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: _currentOrder.synced ? AppTheme.success : AppTheme.secondaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          
                         ],
                       ),
                     ),
@@ -447,7 +440,8 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                                       final isUnit = item.pricingType == 'unit';
                                       final specs = isUnit 
                                           ? '${item.quantity} حبة' 
-                                          : '${item.length}×${item.width} م (${item.area?.toStringAsFixed(1)} م²)';
+                                          : '${item.length}×${item.width} م (${item.area?.toStringAsFixed(1)} م²)'
+                                            '${item.quantity != null && item.quantity! > 1 ? ' × ${item.quantity}' : ''}';
                                       
                                       return TableRow(
                                         children: [
@@ -534,7 +528,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
 
                     // --- WHATSAPP MESSAGES AUTOMATION ---
                     const Text(
-                      'مراسلة العميل بالواتساب (أوتوماتيكي)',
+                      'مراسلة العميل بالواتساب',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),

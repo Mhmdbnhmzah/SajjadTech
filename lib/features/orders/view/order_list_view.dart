@@ -9,6 +9,252 @@ import '../../../core/widgets/app_drawer.dart';
 import '../../../core/database/database_helper.dart';
 import 'order_details_view.dart';
 
+/// Embeddable body for use inside MainNavigation shell
+class OrderListBody extends StatefulWidget {
+  const OrderListBody({super.key});
+
+  @override
+  State<OrderListBody> createState() => _OrderListBodyState();
+}
+
+class _OrderListBodyState extends State<OrderListBody> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() { if (!_tabController.indexIsChanging) setState(() {}); });
+    _searchController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final orderVm = context.watch<OrderViewModel>();
+    final customerVm = context.watch<CustomerViewModel>();
+    final authVm = context.watch<AuthViewModel>();
+    final prefix = authVm.currentTenant?.laundryCode ?? 'أ';
+    final customerMap = {for (var c in customerVm.allCustomers) c.id: c};
+    final query = _searchController.text.trim().toLowerCase();
+    final filteredOrders = orderVm.orders.where((order) {
+      if (_tabController.index == 1 && order.status != 'received') return false;
+      if (_tabController.index == 2 && order.status != 'ready') return false;
+      if (_tabController.index == 3 && order.status != 'delivered') return false;
+      if (query.isNotEmpty) {
+        final customer = customerMap[order.customerId];
+        final matchesName = customer?.name.toLowerCase().contains(query) ?? false;
+        final matchesPhone = customer?.phone.contains(query) ?? false;
+        String cleanQuery = query;
+        if (query.contains('-')) {
+          final parts = query.split('-');
+          final possibleSerial = parts.last.trim();
+          if (int.tryParse(possibleSerial) != null) cleanQuery = possibleSerial;
+        }
+        final matchesSerial = customer?.serialNumber.toString().contains(cleanQuery) ?? false;
+        final matchesId = order.id.toString().contains(cleanQuery);
+        final matchesNotes = order.notes?.toLowerCase().contains(query) ?? false;
+        return matchesName || matchesPhone || matchesSerial || matchesId || matchesNotes;
+      }
+      return true;
+    }).toList();
+    final totalOrdersCount = filteredOrders.length;
+    final totalRevenue = filteredOrders.fold(0.0, (sum, o) => sum + o.totalPrice);
+    final totalItemsCount = filteredOrders.fold(0, (sum, o) => sum + o.itemCount);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    return Column(
+      children: [
+        // Tab Bar
+        Container(
+          color: AppTheme.primaryColor,
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              indicatorColor: AppTheme.secondaryColor,
+              tabs: const [
+                Tab(text: 'الكل'),
+                Tab(text: 'مستلم'),
+                Tab(text: 'جاهز'),
+                Tab(text: 'تم التسليم'),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'ابحث برقم الطلب، اسم العميل، الجوال...',
+                      prefixIcon: const Icon(Icons.search, color: AppTheme.primaryColor),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(icon: const Icon(Icons.clear), onPressed: () => _searchController.clear())
+                          : null,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppTheme.primaryColor.withOpacity(0.15)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildQuickStat('الطلبات', '$totalOrdersCount فاتورة', Icons.description_outlined),
+                        _buildQuickStat('إجمالي القطع', '$totalItemsCount سجاد', Icons.local_laundry_service_outlined),
+                        _buildQuickStat('الإجمالي المالي', '${totalRevenue.toStringAsFixed(0)} ر.ي', Icons.payments_outlined),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: orderVm.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : filteredOrders.isEmpty
+                          ? _buildEmpty()
+                          : ListView.separated(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: filteredOrders.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final order = filteredOrders[index];
+                                final customer = customerMap[order.customerId];
+                                final deliveryDateOnly = DateTime(order.deliveryDate.year, order.deliveryDate.month, order.deliveryDate.day);
+                                final isOverdue = order.status != 'delivered' && deliveryDateOnly.isBefore(today);
+                                bool waSent = false;
+                                if (order.status == 'received') waSent = order.whatsappSentReceived;
+                                else if (order.status == 'ready') waSent = order.whatsappSentReady;
+                                else if (order.status == 'delivered') waSent = order.whatsappSentDelivered;
+                                return _OrderCard(
+                                  order: order,
+                                  customer: customer,
+                                  prefix: prefix,
+                                  isOverdue: isOverdue,
+                                  waSent: waSent,
+                                );
+                              },
+                            ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickStat(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, size: 18, color: AppTheme.primaryColor),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+        Text(label, style: TextStyle(fontSize: 11, color: AppTheme.lightTextSecondary)),
+      ],
+    );
+  }
+
+  Widget _buildEmpty() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey.shade400),
+          const SizedBox(height: 16),
+          Text('لا توجد طلبات', style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
+        ],
+      ),
+    );
+  }
+}
+
+class _OrderCard extends StatelessWidget {
+  final Order order;
+  final Customer? customer;
+  final String prefix;
+  final bool isOverdue;
+  final bool waSent;
+
+  const _OrderCard({
+    required this.order,
+    required this.customer,
+    required this.prefix,
+    required this.isOverdue,
+    required this.waSent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Color statusColor;
+    String statusText;
+    switch (order.status) {
+      case 'received': statusColor = AppTheme.primaryColor; statusText = 'مستلم'; break;
+      case 'ready': statusColor = AppTheme.warning; statusText = 'جاهز'; break;
+      case 'delivered': statusColor = AppTheme.success; statusText = 'تم التسليم'; break;
+      default: statusColor = Colors.grey; statusText = order.status;
+    }
+    return Card(
+      child: InkWell(
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => OrderDetailsView(order: order))),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(width: 4, height: 48, decoration: BoxDecoration(color: statusColor, borderRadius: BorderRadius.circular(4))),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(customer?.name ?? '...', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 2),
+                    Text('ملف: $prefix-${customer?.serialNumber ?? '?'} | ${order.itemCount} قطع', style: TextStyle(fontSize: 12, color: AppTheme.lightTextSecondary)),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('${order.totalPrice.toStringAsFixed(0)} ر.ي', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.secondaryColor)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                    child: Text(statusText, style: TextStyle(fontSize: 11, color: statusColor, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class OrderListView extends StatefulWidget {
   final String? initialStatus;
   const OrderListView({super.key, this.initialStatus});

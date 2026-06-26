@@ -10,8 +10,16 @@ import '../../main.dart';
 
 class AppDrawer extends StatelessWidget {
   final String currentRoute;
-  
-  const AppDrawer({super.key, required this.currentRoute});
+
+  /// إذا كان موجوداً، يُستخدم للتنقل بين التبويبات بدلاً من Navigator.pushReplacement
+  /// يُمرَّر إليه الـ index المطلوب (0=dashboard, 1=orders, 2=customers, 3=carpet_types)
+  final void Function(int index)? onNavigate;
+
+  const AppDrawer({
+    super.key,
+    required this.currentRoute,
+    this.onNavigate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +40,9 @@ class AppDrawer extends StatelessWidget {
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Text(
-                  tenant?.name.isNotEmpty == true ? tenant!.name[0].toUpperCase() : 'M',
+                  tenant?.name.isNotEmpty == true
+                      ? tenant!.name[0].toUpperCase()
+                      : 'M',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -58,63 +68,80 @@ class AppDrawer extends StatelessWidget {
             ),
 
             // Navigation Options
-            ListTile(
-              leading: const Icon(Icons.dashboard_outlined),
-              title: const Text('لوحة التحكم'),
-              selected: currentRoute == 'dashboard',
-              selectedColor: AppTheme.primaryColor,
+            _DrawerItem(
+              icon: Icons.dashboard_outlined,
+              label: 'لوحة التحكم',
+              isSelected: currentRoute == 'dashboard',
               onTap: () {
-                Navigator.pop(context); // Close drawer
+                Navigator.pop(context);
                 if (currentRoute != 'dashboard') {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const DashboardView()),
-                  );
+                  if (onNavigate != null) {
+                    onNavigate!(0);
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const DashboardView()),
+                    );
+                  }
                 }
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.shopping_basket_outlined),
-              title: const Text('إدارة الطلبات'),
-              selected: currentRoute == 'orders',
-              selectedColor: AppTheme.primaryColor,
+            _DrawerItem(
+              icon: Icons.shopping_basket_outlined,
+              label: 'إدارة الطلبات',
+              isSelected: currentRoute == 'orders',
               onTap: () {
-                Navigator.pop(context); // Close drawer
+                Navigator.pop(context);
                 if (currentRoute != 'orders') {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const OrderListView()),
-                  );
+                  if (onNavigate != null) {
+                    onNavigate!(1);
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const OrderListView()),
+                    );
+                  }
                 }
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.people_outline),
-              title: const Text('إدارة العملاء'),
-              selected: currentRoute == 'customers',
-              selectedColor: AppTheme.primaryColor,
+            _DrawerItem(
+              icon: Icons.people_outline,
+              label: 'إدارة العملاء',
+              isSelected: currentRoute == 'customers',
               onTap: () {
-                Navigator.pop(context); // Close drawer
+                Navigator.pop(context);
                 if (currentRoute != 'customers') {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const CustomerListView()),
-                  );
+                  if (onNavigate != null) {
+                    onNavigate!(2);
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const CustomerListView()),
+                    );
+                  }
                 }
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.settings_outlined),
-              title: const Text('إعدادات أسعار السجاد'),
-              selected: currentRoute == 'carpet_types',
-              selectedColor: AppTheme.primaryColor,
+            _DrawerItem(
+              icon: Icons.settings_outlined,
+              label: 'إعدادات أسعار السجاد',
+              isSelected: currentRoute == 'carpet_types',
               onTap: () {
-                Navigator.pop(context); // Close drawer
+                Navigator.pop(context);
                 if (currentRoute != 'carpet_types') {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const CarpetTypeSettingsView()),
-                  );
+                  if (onNavigate != null) {
+                    onNavigate!(3);
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              const CarpetTypeSettingsView()),
+                    );
+                  }
                 }
               },
             ),
@@ -130,7 +157,7 @@ class AppDrawer extends StatelessWidget {
                 style: TextStyle(color: AppTheme.error),
               ),
               onTap: () {
-                Navigator.pop(context); // Close drawer
+                Navigator.pop(context);
                 _showLogoutDialog(context, authViewModel);
               },
             ),
@@ -148,7 +175,8 @@ class AppDrawer extends StatelessWidget {
         textDirection: TextDirection.rtl,
         child: AlertDialog(
           title: const Text('تسجيل الخروج'),
-          content: const Text('هل أنت متأكد من رغبتك في تسجيل الخروج؟ سيتم إغلاق قاعدة البيانات المحلية لهذه المغسلة.'),
+          content: const Text(
+              'هل أنت متأكد من رغبتك في تسجيل الخروج؟ سيتم إغلاق قاعدة البيانات المحلية لهذه المغسلة.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -172,6 +200,43 @@ class AppDrawer extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// زر عنصر في الـ Drawer بتصميم موحد
+class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isSelected ? AppTheme.primaryColor : null,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? AppTheme.primaryColor : null,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      selected: isSelected,
+      selectedTileColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      onTap: onTap,
     );
   }
 }

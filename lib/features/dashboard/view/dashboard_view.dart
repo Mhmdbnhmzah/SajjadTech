@@ -1,95 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../auth/viewmodel/auth_viewmodel.dart';
 import '../viewmodel/dashboard_viewmodel.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_drawer.dart';
 import '../../customers/view/customer_list_view.dart';
 import '../../orders/view/order_form_view.dart';
 import '../../orders/view/order_details_view.dart';
 import '../../orders/view/order_list_view.dart';
 import '../../../core/database/database_helper.dart';
-import '../../../main.dart';
+import '../../auth/viewmodel/auth_viewmodel.dart';
+
+/// Embeddable body for use inside MainNavigation shell
+class DashboardBody extends StatelessWidget {
+  const DashboardBody({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const _DashboardContent();
+  }
+}
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final authViewModel = context.read<AuthViewModel>();
-    final tenant = authViewModel.currentTenant;
+    return const _DashboardContent();
+  }
+}
+
+class _DashboardContent extends StatelessWidget {
+  const _DashboardContent();
+
+  @override
+  Widget build(BuildContext context) {
     final dashboardViewModel = context.watch<DashboardViewModel>();
 
-    // Kick out if account is disabled by admin
-    if (dashboardViewModel.syncMessage == 'ACCOUNT_DISABLED') {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'تم تعطيل حساب المغسلة من قبل الإدارة',
-              textAlign: TextAlign.right,
-            ),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-        authViewModel.logout();
-      });
-    }
-
-    return Scaffold(
-      drawer: const AppDrawer(currentRoute: 'dashboard'),
-      appBar: AppBar(
-        title: Text(tenant?.name ?? 'لوحة التحكم'),
-        actions: [
-          // Sync Button
-          IconButton(
-            icon: dashboardViewModel.isSyncing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Icon(Icons.sync),
-            tooltip: 'مزامنة السحابة',
-            onPressed: dashboardViewModel.isSyncing
-                ? null
-                : () async {
-                    if (tenant != null) {
-                      final isActive = await authViewModel.checkAccountStatus();
-                      if (isActive && context.mounted) {
-                        await dashboardViewModel.triggerSync(tenant.id);
-                        if (dashboardViewModel.syncMessage ==
-                                'ACCOUNT_DISABLED' &&
-                            context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'تم تعطيل حساب المغسلة من قبل الإدارة',
-                                textAlign: TextAlign.right,
-                              ),
-                              backgroundColor: AppTheme.error,
-                            ),
-                          );
-                          await authViewModel.logout();
-                        }
-                      }
-                    }
-                  },
-          ),
-          // Logout Button
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'تسجيل الخروج',
-            onPressed: () {
-              _showLogoutDialog(context, authViewModel);
-            },
-          ),
-        ],
-      ),
-      body: Directionality(
+    return Directionality(
         textDirection: TextDirection.rtl,
         child: SingleChildScrollView(
           child: Column(
@@ -310,7 +256,6 @@ class DashboardView extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -361,9 +306,7 @@ class DashboardView extends StatelessWidget {
                     title,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppTheme.darkTextSecondary
-                          : AppTheme.lightTextSecondary,
+                      color: AppTheme.lightTextSecondary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -449,11 +392,7 @@ class DashboardView extends StatelessWidget {
                             'ملف: ${customer != null ? "$prefix-${customer.serialNumber}" : "..."}',
                             style: TextStyle(
                               fontSize: 12,
-                              color:
-                                  Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? AppTheme.darkTextSecondary
-                                  : AppTheme.lightTextSecondary,
+                              color: AppTheme.lightTextSecondary,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -463,10 +402,7 @@ class DashboardView extends StatelessWidget {
                           '${order.itemCount} قطع سجاد',
                           style: TextStyle(
                             fontSize: 12,
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                ? AppTheme.darkTextSecondary
-                                : AppTheme.lightTextSecondary,
+                            color: AppTheme.lightTextSecondary,
                           ),
                         ),
                       ],
@@ -546,41 +482,6 @@ class DashboardView extends StatelessWidget {
     );
   }
 
-  void _showLogoutDialog(BuildContext context, AuthViewModel authViewModel) {
-    showDialog(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: const Text('تسجيل الخروج'),
-          content: const Text(
-            'هل أنت متأكد من رغبتك في تسجيل الخروج؟ سيتم إغلاق قاعدة البيانات المحلية لهذه المغسلة.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                authViewModel.logout();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AppHome()),
-                  (route) => false,
-                );
-              },
-              child: const Text(
-                'تسجيل خروج',
-                style: TextStyle(color: AppTheme.error),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildUrgentAlertsSection(
     BuildContext context,
@@ -708,9 +609,7 @@ class DashboardView extends StatelessWidget {
                                 'ملف: ${customer != null ? "$prefix-${customer.serialNumber}" : "..."}',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                      ? AppTheme.darkTextSecondary
-                                      : AppTheme.lightTextSecondary,
+                                  color: AppTheme.lightTextSecondary,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -718,9 +617,7 @@ class DashboardView extends StatelessWidget {
                                 '${order.itemCount} قطع سجاد',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Theme.of(context).brightness == Brightness.dark
-                                      ? AppTheme.darkTextSecondary
-                                      : AppTheme.lightTextSecondary,
+                                  color: AppTheme.lightTextSecondary,
                                 ),
                               ),
                             ],

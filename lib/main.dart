@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/firebase_service.dart';
+import 'core/widgets/main_navigation.dart';
 import 'features/auth/viewmodel/auth_viewmodel.dart';
 import 'features/auth/view/login_view.dart';
 import 'features/dashboard/viewmodel/dashboard_viewmodel.dart';
-import 'features/dashboard/view/dashboard_view.dart';
 import 'features/customers/viewmodel/customer_viewmodel.dart';
 import 'features/orders/viewmodel/order_viewmodel.dart';
 import 'features/carpet_types/viewmodel/carpet_type_viewmodel.dart';
@@ -48,9 +49,17 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'المغسلة الحديثة للفرش',
         theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        themeMode: ThemeMode.light,
         debugShowCheckedModeBanner: false,
+        locale: const Locale('ar'),
+        supportedLocales: const [
+          Locale('ar'),
+        ],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         home: const AppHome(),
       ),
     );
@@ -70,7 +79,7 @@ class AppHome extends StatelessWidget {
     if (authViewModel.currentTenant == null) {
       return const LoginView();
     } else {
-      return const DashboardView();
+      return const MainNavigation();
     }
   }
 }

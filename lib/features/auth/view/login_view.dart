@@ -107,9 +107,7 @@ class _LoginViewState extends State<LoginView> {
                 child: Card(
                   elevation: 10,
                   shadowColor: Colors.black45,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppTheme.darkCard
-                      : Colors.white.withOpacity(0.95),
+                  color: Colors.white.withOpacity(0.95),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24.0,

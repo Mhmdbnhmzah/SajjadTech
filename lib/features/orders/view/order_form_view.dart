@@ -188,7 +188,7 @@ class _OrderFormViewState extends State<OrderFormView> {
       final List<OrderItemInput> itemsToSend = _carpetItems.map((item) {
         final pricingType = item.selectedType!.pricingType;
         final unitPrice = double.tryParse(item.priceController.text) ?? 0.0;
-        final qty = pricingType == 'unit' ? (int.tryParse(item.quantityController.text) ?? 1) : null;
+        final qty = int.tryParse(item.quantityController.text) ?? 1;
         final len = pricingType == 'meter' ? (double.tryParse(item.lengthController.text) ?? 0.0) : null;
         final wid = pricingType == 'meter' ? (double.tryParse(item.widthController.text) ?? 0.0) : null;
         final area = pricingType == 'meter' ? (len! * wid!) : null;
@@ -714,6 +714,7 @@ class _OrderFormViewState extends State<OrderFormView> {
     final isUnit = item.selectedType?.pricingType == 'unit';
 
     return Container(
+      key: ObjectKey(item),
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -775,10 +776,10 @@ class _OrderFormViewState extends State<OrderFormView> {
 
           // Row 2: Inputs (if selected)
           if (item.selectedType != null) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (isUnit)
+            if (isUnit)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Expanded(
                     child: TextFormField(
                       controller: item.quantityController,
@@ -798,8 +799,35 @@ class _OrderFormViewState extends State<OrderFormView> {
                       },
                       onChanged: (_) => setState(() => _recalculateTotals()),
                     ),
-                  )
-                else ...[
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: item.priceController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'السعر/الحبة',
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'السعر مطلوب';
+                        }
+                        if (double.tryParse(value) == null || double.parse(value) < 0) {
+                          return 'غير صحيح';
+                        }
+                        return null;
+                      },
+                      onChanged: (_) => setState(() => _recalculateTotals()),
+                    ),
+                  ),
+                ],
+              )
+            else ...[
+              // Row 1: Length & Width
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Expanded(
                     child: TextFormField(
                       controller: item.lengthController,
@@ -842,39 +870,67 @@ class _OrderFormViewState extends State<OrderFormView> {
                     ),
                   ),
                 ],
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: item.priceController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: isUnit ? 'السعر/الحبة' : 'السعر/م²',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              const SizedBox(height: 12),
+              // Row 2: Quantity & Price
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: item.quantityController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'الكمية',
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'مطلوب';
+                        }
+                        if (int.tryParse(value) == null || int.parse(value) <= 0) {
+                          return 'غير صحيح';
+                        }
+                        return null;
+                      },
+                      onChanged: (_) => setState(() => _recalculateTotals()),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'السعر مطلوب';
-                      }
-                      if (double.tryParse(value) == null || double.parse(value) < 0) {
-                        return 'غير صحيح';
-                      }
-                      return null;
-                    },
-                    onChanged: (_) => setState(() => _recalculateTotals()),
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: item.priceController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'السعر/م²',
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'السعر مطلوب';
+                        }
+                        if (double.tryParse(value) == null || double.parse(value) < 0) {
+                          return 'غير صحيح';
+                        }
+                        return null;
+                      },
+                      onChanged: (_) => setState(() => _recalculateTotals()),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  isUnit
-                      ? 'طريقة الحساب: بالحبة 📦'
-                      : 'المساحة: ${((double.tryParse(item.lengthController.text) ?? 0.0) * (double.tryParse(item.widthController.text) ?? 0.0)).toStringAsFixed(1)} م²',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
+                // Text(
+                //   isUnit
+                //       ? 'طريقة الحساب: بالحبة 📦'
+                //       : 'المساحة للقطعة: ${((double.tryParse(item.lengthController.text) ?? 0.0) * (double.tryParse(item.widthController.text) ?? 0.0)).toStringAsFixed(1)} م²'
+                //         '${(int.tryParse(item.quantityController.text) ?? 1) > 1 ? ' (الإجمالي: ${(((double.tryParse(item.lengthController.text) ?? 0.0) * (double.tryParse(item.widthController.text) ?? 0.0)) * (int.tryParse(item.quantityController.text) ?? 1)).toStringAsFixed(1)} م²)' : ''}',
+                //   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                // ),
                 Text(
                   'التكلفة للنوع: ${item.itemTotal.toStringAsFixed(0)} ر.ي',
                   style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.secondaryColor),
@@ -902,8 +958,9 @@ class _OrderFormViewState extends State<OrderFormView> {
       } else {
         final len = double.tryParse(item.lengthController.text) ?? 0.0;
         final wid = double.tryParse(item.widthController.text) ?? 0.0;
-        item.itemTotal = rate * len * wid;
-        totalC += 1; // Each meter carpet counts as 1 piece
+        final qty = int.tryParse(item.quantityController.text) ?? 1;
+        item.itemTotal = rate * len * wid * qty;
+        totalC += qty;
       }
       totalP += item.itemTotal;
     }

@@ -6,8 +6,12 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/database/database_helper.dart';
 
+/// Embeddable body for use inside MainNavigation shell
+typedef CustomerListBody = CustomerListView;
+
 class CustomerListView extends StatefulWidget {
-  const CustomerListView({super.key});
+  final bool isEmbedded;
+  const CustomerListView({super.key, this.isEmbedded = false});
 
   @override
   State<CustomerListView> createState() => _CustomerListViewState();
@@ -202,115 +206,127 @@ class _CustomerListViewState extends State<CustomerListView> {
     final authVm = context.watch<AuthViewModel>();
     final prefix = authVm.currentTenant?.laundryCode ?? 'أ';
 
+    final bodyContent = Directionality(
+      textDirection: TextDirection.rtl,
+      child: Column(
+        children: [
+          // Search Field
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: customerVm.searchCustomers,
+              decoration: InputDecoration(
+                hintText: 'ابحث باسم العميل أو رقم الجوال أو الرقم التسلسلي...',
+                prefixIcon: const Icon(Icons.search, color: AppTheme.primaryColor),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          customerVm.searchCustomers('');
+                        },
+                      )
+                    : null,
+              ),
+            ),
+          ),
+
+            Expanded(
+            child: customerVm.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : customerVm.customers.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: customerVm.customers.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final customer = customerVm.customers[index];
+                          return Card(
+                            elevation: 1.5,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              leading: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '$prefix-${customer.serialNumber}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                customer.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.phone_outlined, size: 14, color: AppTheme.lightTextSecondary),
+                                      const SizedBox(width: 6),
+                                      Text(customer.phone),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_outline, color: AppTheme.error),
+                                onPressed: () => _confirmDeleteCustomer(context, customer),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+        ],
+      ),
+    );
+
+    if (widget.isEmbedded) {
+      return Stack(
+        children: [
+          bodyContent,
+          Positioned(
+            bottom: 16,
+            left: 16,
+            child: FloatingActionButton(
+              heroTag: 'customer_add_fab',
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              onPressed: () => _showAddCustomerDialog(context),
+              child: const Icon(Icons.person_add_alt_1_outlined),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Scaffold(
       drawer: const AppDrawer(currentRoute: 'customers'),
       appBar: AppBar(
         title: const Text('إدارة العملاء'),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'customer_fab',
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         onPressed: () => _showAddCustomerDialog(context),
         child: const Icon(Icons.person_add_alt_1_outlined),
       ),
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Column(
-          children: [
-            // Search Field
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _searchController,
-                onChanged: customerVm.searchCustomers,
-                decoration: InputDecoration(
-                  hintText: 'ابحث باسم العميل أو رقم الجوال أو الرقم التسلسلي...',
-                  prefixIcon: const Icon(Icons.search, color: AppTheme.primaryColor),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            customerVm.searchCustomers('');
-                          },
-                        )
-                      : null,
-                ),
-              ),
-            ),
-
-            // Customers List
-            Expanded(
-              child: customerVm.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : customerVm.customers.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: customerVm.customers.length,
-                          separatorBuilder: (context, index) => const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final customer = customerVm.customers[index];
-                            return Card(
-                              elevation: 1.5,
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(16),
-                                leading: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '$prefix-${customer.serialNumber}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                      color: AppTheme.primaryColor,
-                                    ),
-                                  ),
-                                ),
-                                title: Text(
-                                  customer.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.phone_outlined, size: 14, color: AppTheme.lightTextSecondary),
-                                        const SizedBox(width: 6),
-                                        Text(customer.phone),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      customer.synced ? 'متزامن سحابياً ☁️' : 'غير متزامن (محلي) 💾',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: customer.synced ? AppTheme.success : AppTheme.secondaryColor,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: AppTheme.error),
-                                  onPressed: () => _confirmDeleteCustomer(context, customer),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-            ),
-          ],
-        ),
-      ),
+      body: bodyContent,
     );
   }
 

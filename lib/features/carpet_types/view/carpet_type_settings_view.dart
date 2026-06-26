@@ -5,8 +5,13 @@ import '../../../core/widgets/app_drawer.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/database/database_helper.dart';
 
+/// Embeddable body for use inside MainNavigation shell
+typedef CarpetTypeBody = CarpetTypeSettingsView;
+
 class CarpetTypeSettingsView extends StatefulWidget {
-  const CarpetTypeSettingsView({super.key});
+  final bool isEmbedded;
+  const CarpetTypeSettingsView({super.key, this.isEmbedded = false});
+
 
   @override
   State<CarpetTypeSettingsView> createState() => _CarpetTypeSettingsViewState();
@@ -218,108 +223,134 @@ class _CarpetTypeSettingsViewState extends State<CarpetTypeSettingsView> {
   Widget build(BuildContext context) {
     final carpetVm = context.watch<CarpetTypeViewModel>();
 
+    final body = Directionality(
+      textDirection: TextDirection.rtl,
+      child: carpetVm.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : carpetVm.carpetTypes.isEmpty
+              ? _buildEmptyState()
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: carpetVm.carpetTypes.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final type = carpetVm.carpetTypes[index];
+                    final isUnit = type.pricingType == 'unit';
+
+                    return Card(
+                      elevation: 1.5,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isUnit
+                                ? AppTheme.primaryColor.withOpacity(0.1)
+                                : AppTheme.secondaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            isUnit ? Icons.inventory_2_outlined : Icons.straighten_outlined,
+                            color: isUnit ? AppTheme.primaryColor : AppTheme.secondaryColor,
+                            size: 24,
+                          ),
+                        ),
+                        title: Text(
+                          type.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: Colors.grey.shade300),
+                                  ),
+                                  child: Text(
+                                    isUnit ? '📦 بالحبة' : '📏 بالمتر المربع',
+                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  isUnit
+                                      ? '${type.price.toStringAsFixed(0)} ر.ي / حبة'
+                                      : '${type.price.toStringAsFixed(0)} ر.ي / م²',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.secondaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor),
+                              onPressed: () => _showCarpetTypeDialog(carpetType: type),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: AppTheme.error),
+                              onPressed: () => _confirmDeleteCarpetType(context, type),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+    );
+
+    if (widget.isEmbedded) {
+      return Stack(
+        children: [
+          body,
+          Positioned(
+            bottom: 16,
+            left: 16,
+            child: FloatingActionButton(
+              heroTag: 'carpet_add_fab',
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              onPressed: () => _showCarpetTypeDialog(),
+              child: const Icon(Icons.add_card_outlined),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Scaffold(
       drawer: const AppDrawer(currentRoute: 'carpet_types'),
       appBar: AppBar(
         title: const Text('إعدادات أسعار السجاد'),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'carpet_fab',
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         onPressed: () => _showCarpetTypeDialog(),
         child: const Icon(Icons.add_card_outlined),
       ),
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: carpetVm.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : carpetVm.carpetTypes.isEmpty
-                ? _buildEmptyState()
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: carpetVm.carpetTypes.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final type = carpetVm.carpetTypes[index];
-                      final isUnit = type.pricingType == 'unit';
-
-                      return Card(
-                        elevation: 1.5,
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          leading: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isUnit
-                                  ? AppTheme.primaryColor.withOpacity(0.1)
-                                  : AppTheme.secondaryColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              isUnit ? Icons.inventory_2_outlined : Icons.straighten_outlined,
-                              color: isUnit ? AppTheme.primaryColor : AppTheme.secondaryColor,
-                              size: 24,
-                            ),
-                          ),
-                          title: Text(
-                            type.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: Colors.grey.shade300),
-                                    ),
-                                    child: Text(
-                                      isUnit ? '📦 بالحبة' : '📏 بالمتر المربع',
-                                      style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    isUnit
-                                        ? '${type.price.toStringAsFixed(0)} ر.ي / حبة'
-                                        : '${type.price.toStringAsFixed(0)} ر.ي / م²',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.secondaryColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor),
-                                onPressed: () => _showCarpetTypeDialog(carpetType: type),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, color: AppTheme.error),
-                                onPressed: () => _confirmDeleteCarpetType(context, type),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-      ),
+      body: body,
     );
   }
+
+
+
+
 
   Widget _buildEmptyState() {
     return Center(
