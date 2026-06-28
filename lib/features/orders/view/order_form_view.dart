@@ -64,6 +64,7 @@ class _OrderFormViewState extends State<OrderFormView> {
       builder: (dialogCtx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
+          scrollable: true,
           title: const Text('تسجيل عميل جديد'),
           content: Form(
             key: dialogFormKey,

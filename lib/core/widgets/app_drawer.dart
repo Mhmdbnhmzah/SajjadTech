@@ -5,8 +5,10 @@ import '../../features/dashboard/view/dashboard_view.dart';
 import '../../features/orders/view/order_list_view.dart';
 import '../../features/customers/view/customer_list_view.dart';
 import '../../features/carpet_types/view/carpet_type_settings_view.dart';
+import '../../features/reports/view/reports_view.dart';
 import '../theme/app_theme.dart';
 import '../../main.dart';
+import 'main_navigation.dart';
 
 class AppDrawer extends StatelessWidget {
   final String currentRoute;
@@ -140,6 +142,26 @@ class AppDrawer extends StatelessWidget {
                       MaterialPageRoute(
                           builder: (context) =>
                               const CarpetTypeSettingsView()),
+                    );
+                  }
+                }
+              },
+            ),
+            _DrawerItem(
+              icon: Icons.analytics_outlined,
+              label: 'التقارير والإحصائيات',
+              isSelected: currentRoute == 'reports',
+              onTap: () {
+                Navigator.pop(context);
+                if (currentRoute != 'reports') {
+                  if (onNavigate != null) {
+                    onNavigate!(4);
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MainNavigation(initialIndex: 4),
+                      ),
                     );
                   }
                 }

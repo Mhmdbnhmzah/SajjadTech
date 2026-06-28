@@ -7,6 +7,7 @@ import '../../features/orders/view/order_list_view.dart';
 import '../../features/customers/view/customer_list_view.dart';
 import '../../features/carpet_types/view/carpet_type_settings_view.dart';
 import '../../features/orders/view/order_form_view.dart';
+import '../../features/reports/view/reports_view.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_drawer.dart';
 import '../../main.dart';
@@ -45,6 +46,11 @@ class _MainNavigationState extends State<MainNavigation>
       icon: Icons.tune_outlined,
       activeIcon: Icons.tune_rounded,
       label: 'الانواع',
+    ),
+    _NavItem(
+      icon: Icons.analytics_outlined,
+      activeIcon: Icons.analytics_rounded,
+      label: 'التقارير',
     ),
   ];
 
@@ -92,6 +98,8 @@ class _MainNavigationState extends State<MainNavigation>
         return const CustomerListView(isEmbedded: true);
       case 3:
         return const CarpetTypeSettingsView(isEmbedded: true);
+      case 4:
+        return const ReportsView(isEmbedded: true);
       default:
         return const DashboardBody();
     }
@@ -119,7 +127,7 @@ class _MainNavigationState extends State<MainNavigation>
       });
     }
 
-    final List<String> routeNames = ['dashboard', 'orders', 'customers', 'carpet_types'];
+    final List<String> routeNames = ['dashboard', 'orders', 'customers', 'carpet_types', 'reports'];
 
     return Scaffold(
       backgroundColor: AppTheme.lightBg,

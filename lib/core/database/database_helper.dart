@@ -336,6 +336,23 @@ class AppDatabase extends _$AppDatabase {
   Future<List<OrderItem>> getUnsyncedOrderItems() {
     return (select(orderItems)..where((t) => t.synced.equals(false))).get();
   }
+
+  // --- REPORTS QUERIES ---
+
+  // Get orders created/received in a specific date range
+  Future<List<Order>> getOrdersInDateRange(DateTime start, DateTime end) {
+    return (select(orders)
+          ..where((t) => t.receivedDate.isBiggerOrEqualValue(start) & t.receivedDate.isSmallerOrEqualValue(end) & t.isDeleted.equals(false))
+          ..orderBy([(t) => OrderingTerm(expression: t.receivedDate, mode: OrderingMode.desc)]))
+        .get();
+  }
+
+  // Get customers registered in a specific date range
+  Future<List<Customer>> getCustomersInDateRange(DateTime start, DateTime end) {
+    return (select(customers)
+          ..where((t) => t.createdAt.isBiggerOrEqualValue(start) & t.createdAt.isSmallerOrEqualValue(end) & t.isDeleted.equals(false)))
+        .get();
+  }
 }
 
 LazyDatabase _openConnection(String tenantId) {

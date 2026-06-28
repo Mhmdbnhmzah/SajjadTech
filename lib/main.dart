@@ -10,6 +10,7 @@ import 'features/dashboard/viewmodel/dashboard_viewmodel.dart';
 import 'features/customers/viewmodel/customer_viewmodel.dart';
 import 'features/orders/viewmodel/order_viewmodel.dart';
 import 'features/carpet_types/viewmodel/carpet_type_viewmodel.dart';
+import 'features/reports/viewmodel/reports_viewmodel.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +44,10 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProxyProvider<AuthViewModel, CarpetTypeViewModel>(
           create: (_) => CarpetTypeViewModel(db: null),
+          update: (_, auth, previous) => previous!..updateDb(auth.database),
+        ),
+        ChangeNotifierProxyProvider<AuthViewModel, ReportsViewModel>(
+          create: (_) => ReportsViewModel(db: null),
           update: (_, auth, previous) => previous!..updateDb(auth.database),
         ),
       ],

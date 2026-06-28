@@ -40,6 +40,7 @@ class _CustomerListViewState extends State<CustomerListView> {
       builder: (dialogCtx) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
+          scrollable: true,
           title: const Text('تسجيل عميل جديد'),
           content: Form(
             key: _formKey,

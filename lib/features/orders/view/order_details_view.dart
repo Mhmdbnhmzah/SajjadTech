@@ -61,6 +61,39 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
   }
 
   void _updateStatus(String newStatus) async {
+    if (newStatus == 'delivered') {
+      final remaining = _currentOrder.totalPrice - _currentOrder.paidAmount;
+      if (remaining > 0) {
+        showDialog(
+          context: context,
+          builder: (dialogCtx) => Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              scrollable: true,
+              title: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: AppTheme.error),
+                  SizedBox(width: 8),
+                  Text('تنبيه: متبقي مبلغ غير مدفوع'),
+                ],
+              ),
+              content: Text(
+                'لا يمكن تسليم الطلب قبل استيفاء كامل الحساب.\n'
+                'المبلغ المتبقي على العميل هو: ${remaining.toStringAsFixed(0)} ر.ي.\n'
+                'يرجى الضغط على زر "تسديد المبلغ المتبقي" لتسوية الحساب أولاً.',
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(dialogCtx),
+                  child: const Text('حسناً'),
+                ),
+              ],
+            ),
+          ),
+        );
+        return;
+      }
+    }
     final orderVm = Provider.of<OrderViewModel>(context, listen: false);
     final success = await orderVm.updateOrderStatus(_currentOrder, newStatus);
 

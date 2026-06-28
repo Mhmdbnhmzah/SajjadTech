@@ -49,6 +49,7 @@ class _CarpetTypeSettingsViewState extends State<CarpetTypeSettingsView> {
         builder: (context, setStateBuilder) => Directionality(
           textDirection: TextDirection.rtl,
           child: AlertDialog(
+            scrollable: true,
             title: Text(isEditing ? 'تعديل نوع السجاد' : 'إضافة نوع سجاد جديد'),
             content: Form(
               key: _formKey,
