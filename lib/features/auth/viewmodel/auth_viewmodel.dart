@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/firebase_service.dart';
@@ -19,6 +20,18 @@ class AuthViewModel extends ChangeNotifier {
 
   AppDatabase? _database;
   AppDatabase? get database => _database;
+
+  // Get or create a persistent unique device session ID
+  Future<String> _getOrCreateDeviceSessionId() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? deviceId = prefs.getString('device_session_id');
+    if (deviceId == null) {
+      final random = Random();
+      deviceId = '${DateTime.now().microsecondsSinceEpoch}_${random.nextInt(1000000)}';
+      await prefs.setString('device_session_id', deviceId);
+    }
+    return deviceId;
+  }
 
   AuthViewModel() {
     _tryAutoLogin();
@@ -111,11 +124,22 @@ class AuthViewModel extends ChangeNotifier {
       final bool isActive = statusMap['isActive'] ?? false;
       final String laundryName = statusMap['laundryName'] ?? 'مغسلة سجاد';
       final String laundryCode = statusMap['laundryCode'] ?? 'أ';
+      final String? activeDeviceId = statusMap['activeDeviceId'];
 
       if (!isActive) {
         await _firebaseService.signOut();
         throw Exception('حساب هذه المغسلة معطل حالياً. يرجى التواصل مع الإدارة.');
       }
+
+      // Check single device lock
+      final localDeviceId = await _getOrCreateDeviceSessionId();
+      if (activeDeviceId != null && activeDeviceId.isNotEmpty && activeDeviceId != localDeviceId) {
+        await _firebaseService.signOut();
+        throw Exception('هذا الحساب مسجل حالياً في جهاز آخر. يرجى تسجيل الخروج من الجهاز القديم أولاً للتمكن من الدخول.');
+      }
+
+      // Update active device ID in Firestore
+      await _firebaseService.updateActiveDeviceId(tenantId, localDeviceId);
 
       _currentTenant = LaundryTenant(
         id: tenantId,
@@ -161,6 +185,13 @@ class AuthViewModel extends ChangeNotifier {
 
   Future<void> logout() async {
     try {
+      if (_currentTenant != null) {
+        try {
+          await _firebaseService.updateActiveDeviceId(_currentTenant!.id, null);
+        } catch (e) {
+          print('Failed to clear activeDeviceId on logout: $e');
+        }
+      }
       await _firebaseService.signOut();
       
       // Clear persistence

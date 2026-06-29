@@ -5,7 +5,6 @@ import '../../features/dashboard/view/dashboard_view.dart';
 import '../../features/orders/view/order_list_view.dart';
 import '../../features/customers/view/customer_list_view.dart';
 import '../../features/carpet_types/view/carpet_type_settings_view.dart';
-import '../../features/reports/view/reports_view.dart';
 import '../theme/app_theme.dart';
 import '../../main.dart';
 import 'main_navigation.dart';

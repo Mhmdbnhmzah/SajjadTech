@@ -50,6 +50,7 @@ class FirebaseService {
         'isActive': true,
         'laundryName': 'مغسلة سجاد تجريبية (Demo Mode)',
         'laundryCode': 'أ',
+        'activeDeviceId': null,
       };
     }
     try {
@@ -59,18 +60,34 @@ class FirebaseService {
         final bool isActive = data['isActive'] ?? false;
         final String laundryName = data['laundryName'] ?? 'مغسلة سجاد';
         final String laundryCode = data['laundryCode'] ?? 'أ';
+        final String? activeDeviceId = data['activeDeviceId'];
         return {
           'isActive': isActive,
           'laundryName': laundryName,
           'laundryCode': laundryCode,
+          'activeDeviceId': activeDeviceId,
         };
       }
       return {
         'isActive': false,
         'laundryName': 'مغسلة غير مسجلة',
         'laundryCode': 'أ',
+        'activeDeviceId': null,
       };
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Update a tenant's active device ID in Firestore
+  Future<void> updateActiveDeviceId(String tenantId, String? deviceId) async {
+    if (!isFirebaseInitialized) return;
+    try {
+      await _firestore!.collection('tenants').doc(tenantId).update({
+        'activeDeviceId': deviceId,
+      });
+    } catch (e) {
+      print('Update active device ID error: $e');
       rethrow;
     }
   }
