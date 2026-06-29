@@ -45,26 +45,6 @@ class _DashboardContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Sync Message Status Banner
-                if (dashboardViewModel.syncMessage != null)
-                  Container(
-                    color: dashboardViewModel.syncMessage!.contains('فشلت')
-                        ? AppTheme.error.withOpacity(0.9)
-                        : AppTheme.success.withOpacity(0.9),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 16,
-                    ),
-                    child: Text(
-                      dashboardViewModel.syncMessage!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(

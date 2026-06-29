@@ -102,16 +102,31 @@ class _OrderListBodyState extends State<OrderListBody> with SingleTickerProvider
                   builder: (context, constraints) {
                     final isWide = constraints.maxWidth > 700;
                     
+                    final urgentOrders = orderVm.orders.where((order) {
+                      if (order.status == 'delivered') return false;
+                      final delivDateOnly = DateTime(order.deliveryDate.year, order.deliveryDate.month, order.deliveryDate.day);
+                      final diff = delivDateOnly.difference(today).inDays;
+                      return diff <= 2;
+                    }).toList();
+                    urgentOrders.sort((a, b) => a.deliveryDate.compareTo(b.deliveryDate));
+
+                    final showUrgentAlerts = _tabController.index == 0 && urgentOrders.isNotEmpty;
+                    final itemCount = filteredOrders.length + (showUrgentAlerts ? 1 : 0);
+
                     final listView = orderVm.isLoading
                         ? const Center(child: CircularProgressIndicator())
-                        : filteredOrders.isEmpty
+                        : (filteredOrders.isEmpty && !showUrgentAlerts)
                             ? _buildEmpty()
                             : ListView.separated(
                                 padding: const EdgeInsets.all(16),
-                                itemCount: filteredOrders.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                itemCount: itemCount,
+                                separatorBuilder: (_, index) => const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
-                                  final order = filteredOrders[index];
+                                  if (showUrgentAlerts && index == 0) {
+                                    return _buildUrgentAlertsSection(context, urgentOrders, customerMap, today, prefix);
+                                  }
+                                  final orderIndex = showUrgentAlerts ? index - 1 : index;
+                                  final order = filteredOrders[orderIndex];
                                   final customer = customerMap[order.customerId];
                                   final deliveryDateOnly = DateTime(order.deliveryDate.year, order.deliveryDate.month, order.deliveryDate.day);
                                   final isOverdue = order.status != 'delivered' && deliveryDateOnly.isBefore(today);
@@ -128,27 +143,6 @@ class _OrderListBodyState extends State<OrderListBody> with SingleTickerProvider
                                   );
                                 },
                               );
-
-                    final urgentOrders = orderVm.orders.where((order) {
-                      if (order.status == 'delivered') return false;
-                      final delivDateOnly = DateTime(order.deliveryDate.year, order.deliveryDate.month, order.deliveryDate.day);
-                      final diff = delivDateOnly.difference(today).inDays;
-                      return diff <= 2;
-                    }).toList();
-                    urgentOrders.sort((a, b) => a.deliveryDate.compareTo(b.deliveryDate));
-
-                    final listWithAlerts = Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (_tabController.index == 0 && urgentOrders.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                            child: _buildUrgentAlertsSection(context, urgentOrders, customerMap, today, prefix),
-                          ),
-                        ],
-                        Expanded(child: listView),
-                      ],
-                    );
 
                     if (isWide) {
                       return Row(
@@ -204,7 +198,7 @@ class _OrderListBodyState extends State<OrderListBody> with SingleTickerProvider
                           ),
                           const VerticalDivider(width: 1, thickness: 1),
                           // List
-                          Expanded(child: listWithAlerts),
+                          Expanded(child: listView),
                         ],
                       );
                     } else {
@@ -243,7 +237,7 @@ class _OrderListBodyState extends State<OrderListBody> with SingleTickerProvider
                               ),
                             ),
                           ),
-                          Expanded(child: listWithAlerts),
+                          Expanded(child: listView),
                         ],
                       );
                     }

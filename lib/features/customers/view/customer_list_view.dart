@@ -286,7 +286,12 @@ class _CustomerListViewState extends State<CustomerListView> {
                                     children: [
                                       const Icon(Icons.phone_outlined, size: 14, color: AppTheme.lightTextSecondary),
                                       const SizedBox(width: 6),
-                                      Text(customer.phone),
+                                      Expanded(
+                                        child: Text(
+                                          customer.phone,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ],

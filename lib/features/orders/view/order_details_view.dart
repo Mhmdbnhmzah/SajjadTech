@@ -64,34 +64,127 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
     if (newStatus == 'delivered') {
       final remaining = _currentOrder.totalPrice - _currentOrder.paidAmount;
       if (remaining > 0) {
-        showDialog(
+        final choice = await showDialog<String>(
           context: context,
           builder: (dialogCtx) => Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
-              scrollable: true,
-              title: const Row(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: AppTheme.error),
-                  SizedBox(width: 8),
-                  Text('تنبيه: متبقي مبلغ غير مدفوع'),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.error.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.warning_amber_rounded, color: AppTheme.error, size: 28),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'متبقي مبلغ غير مدفوع',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
                 ],
               ),
-              content: Text(
-                'لا يمكن تسليم الطلب قبل استيفاء كامل الحساب.\n'
-                'المبلغ المتبقي على العميل هو: ${remaining.toStringAsFixed(0)} ر.ي.\n'
-                'يرجى الضغط على زر "تسديد المبلغ المتبقي" لتسوية الحساب أولاً.',
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'المبلغ المتبقي على العميل: ${remaining.toStringAsFixed(0)} ر.ي.',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.error,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'هل تريد إكمال تسليم الطلب وتسجيل المتبقي كدين آجل على العميل، أم تفضل إلغاء التسليم لتسديد الحساب الآن؟',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.lightTextSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
               ),
               actions: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(dialogCtx),
-                  child: const Text('حسناً'),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => Navigator.pop(dialogCtx, 'pay'),
+                      icon: const Icon(Icons.payments_outlined, color: Colors.white, size: 20),
+                      label: const Text(
+                        'تسديد المبلغ الآن',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.success,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      onPressed: () => Navigator.pop(dialogCtx, 'deliver_as_debt'),
+                      icon: const Icon(Icons.monetization_on_outlined, color: Colors.white, size: 20),
+                      label: const Text(
+                        'تسليم وتسجيل المتبقي كدين',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.pop(dialogCtx, 'cancel'),
+                      icon: const Icon(Icons.close_rounded, color: AppTheme.lightTextSecondary, size: 20),
+                      label: const Text(
+                        'إلغاء والتراجع',
+                        style: TextStyle(color: AppTheme.lightTextSecondary),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.grey.shade300),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         );
-        return;
+
+        if (choice == 'cancel' || choice == null) {
+          return;
+        } else if (choice == 'pay') {
+          Future.delayed(Duration.zero, () {
+            if (mounted) {
+              _payRemainingAmount();
+            }
+          });
+          return;
+        }
       }
     }
     final orderVm = Provider.of<OrderViewModel>(context, listen: false);
@@ -101,9 +194,6 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       setState(() {
         _currentOrder = _currentOrder.copyWith(
           status: newStatus,
-          paidAmount: newStatus == 'delivered'
-              ? _currentOrder.totalPrice
-              : _currentOrder.paidAmount,
         );
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,48 +225,31 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
     final remaining = _currentOrder.totalPrice - _currentOrder.paidAmount;
     if (remaining <= 0) return;
 
-    final confirmed = await showDialog<bool>(
+    final double? amountToPay = await showDialog<double>(
       context: context,
       builder: (dialogCtx) => Directionality(
         textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: const Text('تسديد المبلغ المتبقي'),
-          content: Text(
-            'هل أنت متأكد من تسديد المبلغ المتبقي بالكامل ($remaining ر.ي) لتصبح الفاتورة مدفوعة بالكامل؟',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx, false),
-              child: const Text('إلغاء'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(dialogCtx, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.success,
-              ),
-              child: const Text('تأكيد السداد'),
-            ),
-          ],
-        ),
+        child: _PayRemainingDialog(remaining: remaining),
       ),
     );
 
-    if (confirmed == true && mounted) {
+    if (amountToPay != null && amountToPay > 0 && mounted) {
+      final newPaidAmount = _currentOrder.paidAmount + amountToPay;
       final orderVm = Provider.of<OrderViewModel>(context, listen: false);
       final success = await orderVm.updateOrderPaidAmount(
         _currentOrder,
-        _currentOrder.totalPrice,
+        newPaidAmount,
       );
       if (success && mounted) {
         setState(() {
           _currentOrder = _currentOrder.copyWith(
-            paidAmount: _currentOrder.totalPrice,
+            paidAmount: newPaidAmount,
           );
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'تم تسديد المبلغ المتبقي وتحديث الفاتورة بنجاح',
+              'تم تسديد المبلغ وتحديث الفاتورة بنجاح',
               textAlign: TextAlign.right,
             ),
             backgroundColor: AppTheme.success,
@@ -863,4 +936,99 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
 // Extension to allow quick colors
 extension ColorOpacity on Colors {
   static Color get greenOpacity => const Color(0xFFE8F5E9);
+}
+
+class _PayRemainingDialog extends StatefulWidget {
+  final double remaining;
+
+  const _PayRemainingDialog({required this.remaining});
+
+  @override
+  State<_PayRemainingDialog> createState() => _PayRemainingDialogState();
+}
+
+class _PayRemainingDialogState extends State<_PayRemainingDialog> {
+  late final TextEditingController _amountController;
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('تسديد مبلغ من المتبقي'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'إجمالي المبلغ المتبقي: ${widget.remaining.toStringAsFixed(0)} ر.ي',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'المبلغ المدفوع حالياً',
+                suffixText: 'ر.ي',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'يرجى إدخال المبلغ';
+                }
+                final val = double.tryParse(value);
+                if (val == null || val <= 0) {
+                  return 'يرجى إدخال مبلغ صحيح أكبر من الصفر';
+                }
+                if (val > widget.remaining) {
+                  return 'المبلغ المدفوع لا يمكن أن يتجاوز المتبقي (${widget.remaining.toStringAsFixed(0)} ر.ي)';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                _amountController.text = widget.remaining.toStringAsFixed(0);
+              },
+              child: const Text('تسديد كامل المبلغ المتبقي'),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, null),
+          child: const Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_formKey.currentState?.validate() == true) {
+              final entered = double.parse(_amountController.text);
+              Navigator.pop(context, entered);
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.success,
+          ),
+          child: const Text('تأكيد السداد'),
+        ),
+      ],
+    );
+  }
 }

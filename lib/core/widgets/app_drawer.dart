@@ -34,142 +34,147 @@ class AppDrawer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
-            UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(
-                color: AppTheme.primaryColor,
-              ),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Text(
-                  tenant?.name.isNotEmpty == true
-                      ? tenant!.name[0].toUpperCase()
-                      : 'M',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-              ),
-              accountName: Text(
-                tenant?.name ?? 'المغسلة',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              accountEmail: Text(
-                'رمز المغسلة: ${tenant?.laundryCode ?? 'أ'} | ${tenant?.email ?? ''}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.white70,
-                ),
-              ),
-            ),
-
-            // Navigation Options
-            _DrawerItem(
-              icon: Icons.dashboard_outlined,
-              label: 'لوحة التحكم',
-              isSelected: currentRoute == 'dashboard',
-              onTap: () {
-                Navigator.pop(context);
-                if (currentRoute != 'dashboard') {
-                  if (onNavigate != null) {
-                    onNavigate!(0);
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const DashboardView()),
-                    );
-                  }
-                }
-              },
-            ),
-            _DrawerItem(
-              icon: Icons.shopping_basket_outlined,
-              label: 'إدارة الطلبات',
-              isSelected: currentRoute == 'orders',
-              onTap: () {
-                Navigator.pop(context);
-                if (currentRoute != 'orders') {
-                  if (onNavigate != null) {
-                    onNavigate!(1);
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const OrderListView()),
-                    );
-                  }
-                }
-              },
-            ),
-            _DrawerItem(
-              icon: Icons.people_outline,
-              label: 'إدارة العملاء',
-              isSelected: currentRoute == 'customers',
-              onTap: () {
-                Navigator.pop(context);
-                if (currentRoute != 'customers') {
-                  if (onNavigate != null) {
-                    onNavigate!(2);
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const CustomerListView()),
-                    );
-                  }
-                }
-              },
-            ),
-            _DrawerItem(
-              icon: Icons.settings_outlined,
-              label: 'إعدادات أسعار السجاد',
-              isSelected: currentRoute == 'carpet_types',
-              onTap: () {
-                Navigator.pop(context);
-                if (currentRoute != 'carpet_types') {
-                  if (onNavigate != null) {
-                    onNavigate!(3);
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              const CarpetTypeSettingsView()),
-                    );
-                  }
-                }
-              },
-            ),
-            _DrawerItem(
-              icon: Icons.analytics_outlined,
-              label: 'التقارير والإحصائيات',
-              isSelected: currentRoute == 'reports',
-              onTap: () {
-                Navigator.pop(context);
-                if (currentRoute != 'reports') {
-                  if (onNavigate != null) {
-                    onNavigate!(4);
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MainNavigation(initialIndex: 4),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  // Header
+                  UserAccountsDrawerHeader(
+                    decoration: const BoxDecoration(
+                      color: AppTheme.primaryColor,
+                    ),
+                    currentAccountPicture: CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Text(
+                        tenant?.name.isNotEmpty == true
+                            ? tenant!.name[0].toUpperCase()
+                            : 'M',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
                       ),
-                    );
-                  }
-                }
-              },
-            ),
+                    ),
+                    accountName: Text(
+                      tenant?.name ?? 'المغسلة',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                    accountEmail: Text(
+                      'رمز المغسلة: ${tenant?.laundryCode ?? 'أ'} | ${tenant?.email ?? ''}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
 
-            const Spacer(),
-            const Divider(),
+                  // Navigation Options
+                  _DrawerItem(
+                    icon: Icons.dashboard_outlined,
+                    label: 'لوحة التحكم',
+                    isSelected: currentRoute == 'dashboard',
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (currentRoute != 'dashboard') {
+                        if (onNavigate != null) {
+                          onNavigate!(0);
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const DashboardView()),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.shopping_basket_outlined,
+                    label: 'إدارة الطلبات',
+                    isSelected: currentRoute == 'orders',
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (currentRoute != 'orders') {
+                        if (onNavigate != null) {
+                          onNavigate!(1);
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const OrderListView()),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.people_outline,
+                    label: 'إدارة العملاء',
+                    isSelected: currentRoute == 'customers',
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (currentRoute != 'customers') {
+                        if (onNavigate != null) {
+                          onNavigate!(2);
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const CustomerListView()),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.settings_outlined,
+                    label: 'إعدادات أسعار السجاد',
+                    isSelected: currentRoute == 'carpet_types',
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (currentRoute != 'carpet_types') {
+                        if (onNavigate != null) {
+                          onNavigate!(3);
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const CarpetTypeSettingsView()),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.analytics_outlined,
+                    label: 'التقارير والإحصائيات',
+                    isSelected: currentRoute == 'reports',
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (currentRoute != 'reports') {
+                        if (onNavigate != null) {
+                          onNavigate!(4);
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MainNavigation(initialIndex: 4),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
 
             // Logout Option
             ListTile(
