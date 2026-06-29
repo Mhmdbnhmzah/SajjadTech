@@ -71,7 +71,7 @@ class WhatsappService {
     return '''
 مرحباً بك يا *$customerName* 👋
 
-تم استلام سجادك بنجاح في *مغسلة $laundryName*.
+تم استلام سجادك بنجاح في * $laundryName*.
 📦 *عدد القطع:* $itemCount
 💰 *التكلفة الإجمالية:* ${totalPrice.toStringAsFixed(0)} ريال
 💵 *المبلغ المدفوع:* ${paidAmount.toStringAsFixed(0)} ريال
@@ -90,14 +90,14 @@ class WhatsappService {
     required String laundryName,
   }) {
     final remaining = totalPrice - paidAmount;
-    final String paymentStatusStr = remaining <= 0 
-        ? '💵 *حالة الدفع:* مدفوع بالكامل (شكراً لك!)' 
+    final String paymentStatusStr = remaining <= 0
+        ? '💵 *حالة الدفع:* مدفوع بالكامل (شكراً لك!)'
         : '⏳ *المبلغ المطلوب عند الاستلام:* ${remaining.toStringAsFixed(0)} ريال';
-        
+
     return '''
 مرحباً يا *$customerName* 👋
 
-يسعدنا إبلاغك بأن سجادك أصبح *جاهزاً للاستلام* الآن في *مغسلة $laundryName*.
+يسعدنا إبلاغك بأن سجادك أصبح *جاهزاً للاستلام* الآن في * $laundryName*.
 $paymentStatusStr
 
 نسعد بزيارتك في أي وقت! 🧼✨
@@ -115,13 +115,13 @@ $paymentStatusStr
     final String paymentStatusStr = remaining <= 0
         ? '💵 *حالة الدفع:* تم دفع الحساب بالكامل (شكراً لك! ✓)'
         : '💰 *القيمة الإجمالية للطلب:* ${totalPrice.toStringAsFixed(0)} ريال\n'
-          '💵 *المبلغ المدفوع:* ${paidAmount.toStringAsFixed(0)} ريال\n'
-          '⏳ *المبلغ المتبقي (آجل):* ${remaining.toStringAsFixed(0)} ريال';
+              '💵 *المبلغ المدفوع:* ${paidAmount.toStringAsFixed(0)} ريال\n'
+              '⏳ *المبلغ المتبقي (آجل):* ${remaining.toStringAsFixed(0)} ريال';
 
     return '''
 مرحباً يا *$customerName* 👋
 
-تم تسليم السجاد وتأكيد عملية الاستلام بنجاح في *مغسلة $laundryName*.
+تم تسليم السجاد وتأكيد عملية الاستلام بنجاح في * $laundryName*.
 
 $paymentStatusStr
 
